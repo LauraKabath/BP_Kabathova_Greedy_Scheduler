@@ -1,0 +1,11 @@
+﻿ID;Duration;Deadline;Profit
+PreparePresentation;2;5;60
+DataBackup;1;3;30
+ClientMeeting;3;6;90
+SystemUpdate;2;4;40
+EmailCampaign;1;2;20
+DatabaseMigration;4;7;100
+MarketAnalysis;2;5;45
+SecurityAudit;3;8;85
+UXReview;2;6;35
+ReportGeneration;1;3;25
