@@ -4,8 +4,18 @@ import java.io.*;
 import java.util.ArrayList;
 
 public class DataLoader {
-    private String file = "/JobSampleData.csv";
-    private ArrayList<Job> jobs = new ArrayList<>();
+    private String file;
+    private ArrayList<Job> jobs;
+
+    public DataLoader() {
+        file =  "/JobSampleData.csv";
+        jobs = new ArrayList<>();
+    }
+
+    public DataLoader(String file) {
+        this.file = file;
+        jobs = new ArrayList<>();
+    }
 
     public ArrayList<Job> getJobs() {
         BufferedReader br = null;
