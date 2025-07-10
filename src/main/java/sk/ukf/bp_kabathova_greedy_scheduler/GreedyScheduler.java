@@ -4,7 +4,7 @@ import java.util.*;
 
 public abstract class GreedyScheduler {
     protected ArrayList<Job> unscheduledJobs;
-    protected ArrayList<Job> scheduledJobs;
+    protected ArrayList<ScheduledJob> scheduledJobs;
     protected int totalProfit;
 
     public GreedyScheduler(ArrayList<Job> unscheduledJobs) {
@@ -13,7 +13,39 @@ public abstract class GreedyScheduler {
         totalProfit = 0;
     }
 
-    public abstract ArrayList<Job> schedule();
+    public abstract ArrayList<ScheduledJob> schedule();
+
+    protected void allocateJobs() {
+        int maxSlotCount = this.getTimeSlotsCount(unscheduledJobs);
+        boolean[] timeSlots = new boolean[maxSlotCount];
+
+        for (Job job : unscheduledJobs) {
+            int deadline = job.getDeadline();
+            int duration = job.getDuration();
+            int latestStart = deadline - duration;
+
+            for (int start = latestStart; start >= 0; start--){
+                boolean fit = true;
+
+                for (int i = start; i < start + duration; i++){
+                    if (i >= maxSlotCount || timeSlots[i]){
+                        fit = false;
+                        break;
+                    }
+                }
+
+                if (fit){
+                    for (int j = start; j < start + duration; j++){
+                        timeSlots[j] = true;
+                    }
+                    scheduledJobs.add(new ScheduledJob(job, start));
+                    break;
+                }
+            }
+        }
+
+        countTotalProfit();
+    }
 
     protected int getTimeSlotsCount(ArrayList<Job> jobs) {
         int maxCount = 0;
@@ -25,7 +57,7 @@ public abstract class GreedyScheduler {
 
     protected void countTotalProfit(){
         totalProfit = 0;
-        for  (Job job : scheduledJobs) {
+        for  (ScheduledJob job : scheduledJobs) {
             totalProfit += job.getProfit();
         }
     }
@@ -34,7 +66,7 @@ public abstract class GreedyScheduler {
         return unscheduledJobs;
     }
 
-    public ArrayList<Job> getScheduledJobs() {
+    public ArrayList<ScheduledJob> getScheduledJobs() {
         return scheduledJobs;
     }
 

@@ -1,10 +1,10 @@
 package sk.ukf.bp_kabathova_greedy_scheduler;
 
 public class Job {
-    private String ID;
-    private int duration;
-    private int deadline;
-    private int profit;
+    protected String ID;
+    protected int duration;
+    protected int deadline;
+    protected int profit;
 
     public Job(String ID, int duration, int deadline, int profit) {
         this.ID = ID;
@@ -47,8 +47,7 @@ public class Job {
 
     @Override
     public String toString() {
-        return "Job {" +
-                "ID='" + ID + '\'' +
+        return ID + " {" +
                 ", duration=" + duration +
                 ", deadline=" + deadline +
                 ", profit=" + profit +
