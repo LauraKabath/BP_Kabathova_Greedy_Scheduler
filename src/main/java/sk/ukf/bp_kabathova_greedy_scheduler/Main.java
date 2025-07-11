@@ -6,9 +6,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
@@ -19,6 +17,8 @@ public class Main extends Application {
     private TableView<ScheduledJob> tableView = new TableView<>();
     private ObservableList<ScheduledJob> displayedJobs =  FXCollections.observableArrayList();
     private ArrayList<Job> jobs;
+    private ComboBox<String> algorithmComboBox = new ComboBox<>();
+    private Label profitLabel = new Label("Profit: 0");
     @Override
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
@@ -27,22 +27,13 @@ public class Main extends Application {
         jobs = loader.getJobs();
 
         setTableView();
+        setAlgorithmComboBox();
 
-        Button highestProfitButton = new Button("Highest Profit");
-        highestProfitButton.setOnAction(e -> {
-            displayedJobs.setAll(new HighestProfitScheduler(jobs).schedule());
-        });
-        Button earliestDeadlineButton = new Button("Earliest Deadline");
-        earliestDeadlineButton.setOnAction(e -> {
-            displayedJobs.setAll(new EarliestDeadlineScheduler(jobs).schedule());
-        });
-        Button shortestJobFirstButton = new Button("Shortest Job First");
-        shortestJobFirstButton.setOnAction(e -> {
-            displayedJobs.setAll(new ShortestJobFirstScheduler(jobs).schedule());
-        });
+        Button runButton = new Button("Run");
+        runButton.setOnAction(e -> runScheduler());
 
-        HBox controls = new HBox(10);
-        controls.getChildren().addAll(highestProfitButton, earliestDeadlineButton, shortestJobFirstButton);
+        HBox controls = new HBox(15);
+        controls.getChildren().addAll(new Label("Algorithm:"), algorithmComboBox, runButton, profitLabel);
 
         root.setTop(controls);
         root.setCenter(tableView);
@@ -77,6 +68,34 @@ public class Main extends Application {
 
         tableView.getColumns().addAll(idCol, durationCol, startTimeCol, endTimeCol, deadlineCol, profitCol);
         tableView.setItems(displayedJobs);
+    }
+
+    private void setAlgorithmComboBox() {
+        algorithmComboBox.getItems().addAll(
+                "Highest Profit",
+                "Earliest Deadline",
+                "Shortest Job First"
+        );
+        algorithmComboBox.getSelectionModel().selectFirst();
+    }
+
+    private void runScheduler() {
+        String selected = algorithmComboBox.getValue();
+        GreedyScheduler scheduler;
+        switch (selected) {
+            case "Highest Profit":
+                scheduler = new HighestProfitScheduler(jobs);
+                break;
+            case "Earliest Deadline":
+                scheduler = new EarliestDeadlineScheduler(jobs);
+                break;
+            case "Shortest Job First":
+            default:
+                scheduler = new ShortestJobFirstScheduler(jobs);
+                break;
+        }
+        displayedJobs.setAll(scheduler.schedule());
+        profitLabel.setText("Profit: " + scheduler.getTotalProfit());
     }
 
     public static void main(String[] args) {
