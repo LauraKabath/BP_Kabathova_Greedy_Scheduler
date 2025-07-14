@@ -74,7 +74,8 @@ public class Main extends Application {
         algorithmComboBox.getItems().addAll(
                 "Highest Profit",
                 "Earliest Deadline",
-                "Shortest Job First"
+                "Shortest Job First",
+                "Profit per Duration"
         );
         algorithmComboBox.getSelectionModel().selectFirst();
     }
@@ -88,6 +89,9 @@ public class Main extends Application {
                 break;
             case "Earliest Deadline":
                 scheduler = new EarliestDeadlineScheduler(jobs);
+                break;
+            case "Profit per Duration":
+                scheduler = new ProfitPerDurationScheduler(jobs);
                 break;
             case "Shortest Job First":
             default:
