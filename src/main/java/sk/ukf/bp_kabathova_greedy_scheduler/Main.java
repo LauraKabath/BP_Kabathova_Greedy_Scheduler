@@ -1,6 +1,7 @@
 package sk.ukf.bp_kabathova_greedy_scheduler;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -18,25 +19,45 @@ public class Main extends Application {
     private ObservableList<ScheduledJob> displayedJobs =  FXCollections.observableArrayList();
     private ArrayList<Job> jobs;
     private ComboBox<String> algorithmComboBox = new ComboBox<>();
-    private Label profitLabel = new Label("Profit: 0");
+    private TableView<SchedulerResult> resultTableView = new TableView<>();
+    private ObservableList<SchedulerResult> displayedResults =  FXCollections.observableArrayList();
+    private HighestProfitScheduler highestProfitScheduler;
+    private EarliestDeadlineScheduler earliestDeadlineScheduler;
+    private ShortestJobFirstScheduler shortestJobFirstScheduler;
+    private ProfitPerDurationScheduler profitPerDurationScheduler;
     @Override
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
 
         DataLoader loader = new DataLoader();
         jobs = loader.getJobs();
+        initialiseSchedulers();
 
         setTableView();
+        setResultTableView();
         setAlgorithmComboBox();
 
+        TabPane tabPane = new TabPane();
+        Tab jobsTab = new Tab("Scheduled Jobs", tableView);
+        Tab resultTab = new Tab("Results", resultTableView);
+        tabPane.getTabs().addAll(jobsTab, resultTab);
+
         Button runButton = new Button("Run");
-        runButton.setOnAction(e -> runScheduler());
+        runButton.setOnAction(e -> {
+            runScheduler();
+        });
+
+        Button runAllButton = new Button("Run All");
+        runAllButton.setOnAction(e -> {
+            getAllResults();
+        });
 
         HBox controls = new HBox(15);
-        controls.getChildren().addAll(new Label("Algorithm:"), algorithmComboBox, runButton, profitLabel);
+        controls.getChildren().addAll(new Label("Algorithm:"), algorithmComboBox, runButton, runAllButton);
 
         root.setTop(controls);
         root.setCenter(tableView);
+        root.setCenter(tabPane);
 
         Scene scene = new Scene(root, 900, 500);
         stage.setTitle("Kabathova Greedy Scheduler");
@@ -56,6 +77,7 @@ public class Main extends Application {
 
         TableColumn<ScheduledJob, Integer> startTimeCol = new TableColumn<>("Start Time");
         startTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getStartTime()).asObject());
+        startTimeCol.setSortType(TableColumn.SortType.ASCENDING);
 
         TableColumn<ScheduledJob, Integer> endTimeCol = new TableColumn<>("End Time");
         endTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getEndTime()).asObject());
@@ -68,6 +90,35 @@ public class Main extends Application {
 
         tableView.getColumns().addAll(idCol, durationCol, startTimeCol, endTimeCol, deadlineCol, profitCol);
         tableView.setItems(displayedJobs);
+        tableView.getSortOrder().add(startTimeCol);
+    }
+
+    private void setResultTableView() {
+        resultTableView.getColumns().clear();
+
+        TableColumn<SchedulerResult, String> nameCol = new TableColumn<>("Algorithm");
+        nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAlgorithmName()));
+
+        TableColumn<SchedulerResult, Integer> scheduledJobsCountCol = new TableColumn<>("Scheduled Jobs");
+        scheduledJobsCountCol.setCellValueFactory(celldata -> new SimpleIntegerProperty(celldata.getValue().getScheduledJobsCount()).asObject());
+
+        TableColumn<SchedulerResult, Integer> jobsCountCol = new TableColumn<>("Total number of Jobs");
+        jobsCountCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getUnscheduledJobsCount()).asObject());
+
+        TableColumn<SchedulerResult, Integer> profitCol = new TableColumn<>("Total profit");
+        profitCol.setCellValueFactory(celldata -> new SimpleIntegerProperty(celldata.getValue().getTotalProfit()).asObject());
+
+        TableColumn<SchedulerResult, Integer> timeCol = new TableColumn<>("Total Time");
+        timeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalTimeUsed()).asObject());
+
+        TableColumn<SchedulerResult,Double> executionTimeCol = new TableColumn<>("Execution time");
+        executionTimeCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getExecutionTimeMillis()).asObject());
+
+        resultTableView.getColumns().addAll(nameCol, scheduledJobsCountCol, jobsCountCol, profitCol, timeCol, executionTimeCol);
+        resultTableView.getColumns().forEach(col -> col.setMinWidth(105));
+        nameCol.setMinWidth(160);
+        jobsCountCol.setMinWidth(140);
+        resultTableView.setItems(displayedResults);
     }
 
     private void setAlgorithmComboBox() {
@@ -80,26 +131,47 @@ public class Main extends Application {
         algorithmComboBox.getSelectionModel().selectFirst();
     }
 
+    private void initialiseSchedulers() {
+        highestProfitScheduler = new HighestProfitScheduler(jobs);
+        earliestDeadlineScheduler = new EarliestDeadlineScheduler(jobs);
+        profitPerDurationScheduler = new ProfitPerDurationScheduler(jobs);
+        shortestJobFirstScheduler = new ShortestJobFirstScheduler(jobs);
+    }
+
     private void runScheduler() {
         String selected = algorithmComboBox.getValue();
-        GreedyScheduler scheduler;
         switch (selected) {
             case "Highest Profit":
-                scheduler = new HighestProfitScheduler(jobs);
+                getAlgorithmResult(highestProfitScheduler);
                 break;
             case "Earliest Deadline":
-                scheduler = new EarliestDeadlineScheduler(jobs);
+                getAlgorithmResult(earliestDeadlineScheduler);
                 break;
             case "Profit per Duration":
-                scheduler = new ProfitPerDurationScheduler(jobs);
+                getAlgorithmResult(profitPerDurationScheduler);
                 break;
             case "Shortest Job First":
             default:
-                scheduler = new ShortestJobFirstScheduler(jobs);
+                getAlgorithmResult(shortestJobFirstScheduler);
                 break;
         }
-        displayedJobs.setAll(scheduler.schedule());
-        profitLabel.setText("Profit: " + scheduler.getTotalProfit());
+        tableView.sort();
+    }
+
+    private void getAlgorithmResult(GreedyScheduler greedyScheduler) {
+        displayedResults.clear();
+        SchedulerResult result = greedyScheduler.getResult();
+        displayedResults.add(result);
+        displayedJobs.setAll(greedyScheduler.getScheduledJobs());
+    }
+
+    private void getAllResults(){
+        displayedResults.clear();
+        GreedyScheduler[] schedulers = new GreedyScheduler[]{highestProfitScheduler, earliestDeadlineScheduler, profitPerDurationScheduler, shortestJobFirstScheduler};
+        for  (GreedyScheduler scheduler : schedulers) {
+            SchedulerResult schedulerResult = scheduler.getResult();
+            displayedResults.add(schedulerResult);
+        }
     }
 
     public static void main(String[] args) {

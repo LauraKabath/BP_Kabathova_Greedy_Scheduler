@@ -8,9 +8,8 @@ public class ShortestJobFirstScheduler extends GreedyScheduler{
     }
 
     @Override
-    public ArrayList<ScheduledJob> schedule() {
+    protected void schedule() {
         unscheduledJobs.sort((j1, j2) -> Integer.compare(j1.getDuration(), j2.getDuration()));
         allocateJobs();
-        return scheduledJobs;
     }
 }

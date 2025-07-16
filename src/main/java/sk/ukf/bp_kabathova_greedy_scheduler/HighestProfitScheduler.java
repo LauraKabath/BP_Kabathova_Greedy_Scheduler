@@ -8,9 +8,8 @@ public class HighestProfitScheduler extends GreedyScheduler {
     }
 
     @Override
-    public ArrayList<ScheduledJob> schedule() {
+    protected void schedule() {
         unscheduledJobs.sort((j1, j2) -> Integer.compare(j2.getProfit(), j1.getProfit()));
         allocateJobs();
-        return scheduledJobs;
     }
 }
