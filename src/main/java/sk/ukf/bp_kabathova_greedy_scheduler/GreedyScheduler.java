@@ -6,6 +6,7 @@ public abstract class GreedyScheduler {
     protected ArrayList<Job> unscheduledJobs;
     protected ArrayList<ScheduledJob> scheduledJobs;
     protected SchedulerResult result;
+    protected int maxSlotsCount;
     protected int slotsCount;
     protected int totalProfit;
 
@@ -13,7 +14,8 @@ public abstract class GreedyScheduler {
         this.unscheduledJobs = new ArrayList<>(unscheduledJobs);
         scheduledJobs = new ArrayList<>();
         totalProfit = 0;
-        slotsCount = getTimeSlotsCount();
+        maxSlotsCount = getTimeSlotsCount();
+        slotsCount = 0;
     }
 
     protected abstract void schedule();
@@ -29,8 +31,7 @@ public abstract class GreedyScheduler {
     }
 
     protected void allocateJobs() {
-        boolean[] timeSlots = new boolean[slotsCount];
-
+        boolean[] timeSlots = new boolean[maxSlotsCount];
         for (Job job : unscheduledJobs) {
             int deadline = job.getDeadline();
             int duration = job.getDuration();
@@ -40,7 +41,7 @@ public abstract class GreedyScheduler {
                 boolean fit = true;
 
                 for (int i = start; i < start + duration; i++){
-                    if (i >= slotsCount || timeSlots[i]){
+                    if (i >= maxSlotsCount || timeSlots[i]){
                         fit = false;
                         break;
                     }
@@ -49,6 +50,7 @@ public abstract class GreedyScheduler {
                 if (fit){
                     for (int j = start; j < start + duration; j++){
                         timeSlots[j] = true;
+                        slotsCount++;
                     }
                     scheduledJobs.add(new ScheduledJob(job, start));
                     break;
@@ -60,12 +62,12 @@ public abstract class GreedyScheduler {
     }
 
     protected int getTimeSlotsCount() {
-        if (slotsCount == 0) {
+        if (maxSlotsCount == 0) {
             for (Job job : unscheduledJobs) {
-                if (job.getDeadline() > slotsCount) slotsCount = job.getDeadline();
+                if (job.getDeadline() > maxSlotsCount) maxSlotsCount = job.getDeadline();
             }
         }
-        return slotsCount;
+        return maxSlotsCount;
     }
 
     protected void countTotalProfit(){
@@ -89,5 +91,9 @@ public abstract class GreedyScheduler {
 
     public int getTotalProfit() {
         return totalProfit;
+    }
+
+    public int getSlotsCount() {
+        return slotsCount;
     }
 }
