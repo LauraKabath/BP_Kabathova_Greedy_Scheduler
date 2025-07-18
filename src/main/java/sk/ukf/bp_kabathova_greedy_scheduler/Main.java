@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -25,6 +26,7 @@ public class Main extends Application {
     private EarliestDeadlineScheduler earliestDeadlineScheduler;
     private ShortestJobFirstScheduler shortestJobFirstScheduler;
     private ProfitPerDurationScheduler profitPerDurationScheduler;
+    StatsBox statsBox = new StatsBox();
     @Override
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
@@ -37,10 +39,14 @@ public class Main extends Application {
         setResultTableView();
         setAlgorithmComboBox();
 
+        SplitPane splitPane = new SplitPane(tableView, statsBox);
+        splitPane.setOrientation(Orientation.HORIZONTAL);
+        splitPane.setDividerPositions(0.6);
+
         TabPane tabPane = new TabPane();
-        Tab jobsTab = new Tab("Scheduled Jobs", tableView);
+        Tab jobsTab = new Tab("Scheduled Jobs", splitPane);
         Tab resultTab = new Tab("Results", resultTableView);
-        tabPane.getTabs().addAll(jobsTab, resultTab);
+        tabPane.getTabs().add(jobsTab);
 
         Button runButton = new Button("Run");
         runButton.setOnAction(e -> {
@@ -50,6 +56,7 @@ public class Main extends Application {
         Button runAllButton = new Button("Run All");
         runAllButton.setOnAction(e -> {
             getAllResults();
+            tabPane.getTabs().add(resultTab);
         });
 
         HBox controls = new HBox(15);
@@ -59,7 +66,7 @@ public class Main extends Application {
         root.setCenter(tableView);
         root.setCenter(tabPane);
 
-        Scene scene = new Scene(root, 900, 500);
+        Scene scene = new Scene(root, 900, 700);
         stage.setTitle("Kabathova Greedy Scheduler");
         stage.setScene(scene);
         stage.show();
@@ -159,10 +166,9 @@ public class Main extends Application {
     }
 
     private void getAlgorithmResult(GreedyScheduler greedyScheduler) {
-        displayedResults.clear();
         SchedulerResult result = greedyScheduler.getResult();
-        displayedResults.add(result);
         displayedJobs.setAll(greedyScheduler.getScheduledJobs());
+        statsBox.updateLabels(result.getAlgorithmName(), result.getTotalProfit(), result.getTotalTimeUsed(), result.getExecutionTimeMillis());
     }
 
     private void getAllResults(){
