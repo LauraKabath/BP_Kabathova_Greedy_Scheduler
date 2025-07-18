@@ -66,7 +66,7 @@ public class Main extends Application {
         root.setCenter(tableView);
         root.setCenter(tabPane);
 
-        Scene scene = new Scene(root, 900, 700);
+        Scene scene = new Scene(root, 1100, 700);
         stage.setTitle("Kabathova Greedy Scheduler");
         stage.setScene(scene);
         stage.show();
@@ -169,6 +169,7 @@ public class Main extends Application {
         SchedulerResult result = greedyScheduler.getResult();
         displayedJobs.setAll(greedyScheduler.getScheduledJobs());
         statsBox.updateLabels(result.getAlgorithmName(), result.getTotalProfit(), result.getTotalTimeUsed(), result.getExecutionTimeMillis());
+        statsBox.createJobsPieChart(result);
     }
 
     private void getAllResults(){
