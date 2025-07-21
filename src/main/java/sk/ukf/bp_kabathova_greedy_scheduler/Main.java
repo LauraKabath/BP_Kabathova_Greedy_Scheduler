@@ -45,7 +45,10 @@ public class Main extends Application {
 
         TabPane tabPane = new TabPane();
         Tab jobsTab = new Tab("Scheduled Jobs", splitPane);
+        jobsTab.setClosable(false);
         Tab resultTab = new Tab("Results", resultTableView);
+        ChartBox chartBox = new ChartBox(displayedResults);
+        Tab chartsTab = new Tab("Charts", chartBox);
         tabPane.getTabs().add(jobsTab);
 
         Button runButton = new Button("Run");
@@ -56,7 +59,14 @@ public class Main extends Application {
         Button runAllButton = new Button("Run All");
         runAllButton.setOnAction(e -> {
             getAllResults();
-            tabPane.getTabs().add(resultTab);
+            chartBox.setResultObservableList(displayedResults);
+            if (!tabPane.getTabs().contains(resultTab)) {
+                tabPane.getTabs().add(resultTab);
+            }
+            if (!tabPane.getTabs().contains(chartsTab)) {
+                tabPane.getTabs().add(chartsTab);
+            }
+            tabPane.getSelectionModel().select(resultTab);
         });
 
         HBox controls = new HBox(15);
