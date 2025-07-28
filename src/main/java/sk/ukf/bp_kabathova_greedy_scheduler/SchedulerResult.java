@@ -7,6 +7,7 @@ public class SchedulerResult {
     private int scheduledJobsCount;
     private int unscheduledJobsCount;
     private long executionTime;
+    private double score;
 
     public SchedulerResult(String algorithmName, int totalProfit, int totalTimeUsed, int scheduledJobsCount, int unscheduledJobsCount, long executionTime) {
         this.algorithmName = algorithmName;
@@ -15,6 +16,7 @@ public class SchedulerResult {
         this.scheduledJobsCount = scheduledJobsCount;
         this.unscheduledJobsCount = unscheduledJobsCount;
         this.executionTime = executionTime;
+        score = 0;
     }
 
     public String getAlgorithmName() {
@@ -43,6 +45,20 @@ public class SchedulerResult {
 
     public double getExecutionTimeMillis() {
         return executionTime / 1000000.0;
+    }
+
+    public double getScore() {
+        return Math.round(score*100)/100.0;
+    }
+
+    public void calculateScore(double profitWeight, double timeWeight, double jobsWeight) {
+        double normalizedProfit = totalProfit;
+        double normalizedTime = totalTimeUsed == 0 ? 1 : (1.0 / totalTimeUsed);
+        double normalizedJobsCount = scheduledJobsCount;
+
+        this.score = profitWeight * normalizedProfit
+                + timeWeight * normalizedTime
+                + jobsWeight * normalizedJobsCount;
     }
 
     @Override

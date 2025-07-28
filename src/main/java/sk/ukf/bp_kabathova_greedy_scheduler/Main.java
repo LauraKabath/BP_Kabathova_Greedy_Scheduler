@@ -14,6 +14,8 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class Main extends Application {
     private TableView<ScheduledJob> tableView = new TableView<>();
@@ -57,9 +59,28 @@ public class Main extends Application {
         });
 
         Button runAllButton = new Button("Run All");
+
+        WeightsDialog weightsDialog = new WeightsDialog();
+
+        Button weightButton = new Button("Weights");
+        weightButton.setOnAction(e -> weightsDialog.showAndWait());
+
         runAllButton.setOnAction(e -> {
             getAllResults();
             chartBox.setResultObservableList(displayedResults);
+
+            double profitWeight = weightsDialog.getProfitWeight();
+            double timeWeight = weightsDialog.getTimeWeight();
+            double jobsWeight = weightsDialog.getJobsWeight();
+
+            for (SchedulerResult result : displayedResults) {
+                result.calculateScore(profitWeight, timeWeight, jobsWeight);
+            }
+
+            SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
+            highlightBestResult(best);
+            resultTableView.refresh();
+
             if (!tabPane.getTabs().contains(resultTab)) {
                 tabPane.getTabs().add(resultTab);
             }
@@ -70,7 +91,7 @@ public class Main extends Application {
         });
 
         HBox controls = new HBox(15);
-        controls.getChildren().addAll(new Label("Algorithm:"), algorithmComboBox, runButton, runAllButton);
+        controls.getChildren().addAll(new Label("Algorithm:"), algorithmComboBox, runButton, runAllButton, weightButton);
 
         root.setTop(controls);
         root.setCenter(tableView);
@@ -131,7 +152,10 @@ public class Main extends Application {
         TableColumn<SchedulerResult,Double> executionTimeCol = new TableColumn<>("Execution time");
         executionTimeCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getExecutionTimeMillis()).asObject());
 
-        resultTableView.getColumns().addAll(nameCol, scheduledJobsCountCol, jobsCountCol, profitCol, timeCol, executionTimeCol);
+        TableColumn<SchedulerResult,Double> scoreCol = new TableColumn<>("Score");
+        scoreCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getScore()).asObject());
+
+        resultTableView.getColumns().addAll(nameCol, scheduledJobsCountCol, jobsCountCol, profitCol, timeCol, executionTimeCol, scoreCol);
         resultTableView.getColumns().forEach(col -> col.setMinWidth(105));
         nameCol.setMinWidth(160);
         jobsCountCol.setMinWidth(140);
@@ -189,6 +213,22 @@ public class Main extends Application {
             SchedulerResult schedulerResult = scheduler.getResult();
             displayedResults.add(schedulerResult);
         }
+    }
+
+    public void highlightBestResult(SchedulerResult bestResult) {
+        resultTableView.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(SchedulerResult item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setStyle("");
+                } else if (item.getAlgorithmName().equals(bestResult.getAlgorithmName())) {
+                    setStyle("-fx-background-color: #fff8dc; -fx-border-color: gold;");
+                } else {
+                    setStyle("");
+                }
+            }
+        });
     }
 
     public static void main(String[] args) {
