@@ -4,41 +4,53 @@ import java.io.*;
 import java.util.ArrayList;
 
 public class DataLoader {
-    private String file;
     private ArrayList<Job> jobs;
 
     public DataLoader() {
-        file =  "/JobSampleData.csv";
         jobs = new ArrayList<>();
     }
 
-    public DataLoader(String file) {
-        this.file = file;
-        jobs = new ArrayList<>();
+
+    public ArrayList<Job> loadFromResource(String filepath) {
+        try {
+            InputStream inputStream = getClass().getResourceAsStream(filepath);
+            if (inputStream == null) {
+                throw new FileNotFoundException(filepath + " not found");
+            }
+            loadJobs(new InputStreamReader(inputStream));
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return jobs;
     }
 
-    public ArrayList<Job> getJobs() {
+    public ArrayList<Job> loadFromFile(File file) {
+        try {
+            FileReader fileReader = new FileReader(file);
+            loadJobs(fileReader);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return jobs;
+    }
+
+    private void loadJobs(Reader reader){
+        jobs.clear();
         BufferedReader br = null;
         try {
-            InputStream inputStream = getClass().getResourceAsStream(file);
-            if (inputStream == null) {
-                throw new FileNotFoundException(file + " not found");
-            }
-
-            br = new BufferedReader(new InputStreamReader(inputStream));
-            String line =  br.readLine();
+            br = new BufferedReader(reader);
+            String line = br.readLine();
             while ((line = br.readLine()) != null) {
-                String[] data = line.split(";");
-                String jobID = data[0];
-
-                int duration = Integer.parseInt(data[1]);
-                int deadline = Integer.parseInt(data[2]);
-                int profit = Integer.parseInt(data[3]);
-
+                String[] data = line.split("[;,]");
+                if (data.length < 4) continue;
+                String jobID = data[0].trim();
+                int duration = Integer.parseInt(data[1].trim());
+                int deadline = Integer.parseInt(data[2].trim());
+                int profit = Integer.parseInt(data[3].trim());
                 Job job = new Job(jobID, duration, deadline, profit);
                 jobs.add(job);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         } finally{
             try {
@@ -47,6 +59,9 @@ public class DataLoader {
                 System.out.println(ioException.getMessage());
             }
         }
+    }
+
+    public ArrayList<Job> getJobs() {
         return jobs;
     }
 }

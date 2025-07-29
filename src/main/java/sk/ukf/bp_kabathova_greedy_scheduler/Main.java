@@ -11,8 +11,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,6 +22,8 @@ import java.util.Comparator;
 public class Main extends Application {
     private TableView<ScheduledJob> tableView = new TableView<>();
     private ObservableList<ScheduledJob> displayedJobs =  FXCollections.observableArrayList();
+    private DataLoader loader = new DataLoader();
+    FileChooser fileChooser = new FileChooser();
     private ArrayList<Job> jobs;
     private ComboBox<String> algorithmComboBox = new ComboBox<>();
     private TableView<SchedulerResult> resultTableView = new TableView<>();
@@ -33,8 +37,7 @@ public class Main extends Application {
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
 
-        DataLoader loader = new DataLoader();
-        jobs = loader.getJobs();
+        jobs = loader.loadFromResource("/JobSampleData.csv");
         initialiseSchedulers();
 
         setTableView();
@@ -90,8 +93,17 @@ public class Main extends Application {
             tabPane.getSelectionModel().select(resultTab);
         });
 
+        Button uploadButton = new Button("Upload");
+        uploadButton.setOnAction(e -> {
+            ArrayList<Job> uploadedJobs = uploadJobFile(stage);
+            if (!uploadedJobs.isEmpty()) {
+                jobs = uploadedJobs;
+                initialiseSchedulers();
+            }
+        });
+
         HBox controls = new HBox(15);
-        controls.getChildren().addAll(new Label("Algorithm:"), algorithmComboBox, runButton, runAllButton, weightButton);
+        controls.getChildren().addAll( new Label(" Algorithm:"), algorithmComboBox, runButton, runAllButton, weightButton, uploadButton);
 
         root.setTop(controls);
         root.setCenter(tableView);
@@ -215,7 +227,7 @@ public class Main extends Application {
         }
     }
 
-    public void highlightBestResult(SchedulerResult bestResult) {
+    private void highlightBestResult(SchedulerResult bestResult) {
         resultTableView.setRowFactory(tv -> new TableRow<>() {
             @Override
             protected void updateItem(SchedulerResult item, boolean empty) {
@@ -229,6 +241,21 @@ public class Main extends Application {
                 }
             }
         });
+    }
+
+    private ArrayList<Job> uploadJobFile(Stage stage){
+        fileChooser.setTitle("Select .csv file");
+        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile != null) {
+            try {
+                return loader.loadFromFile(selectedFile);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
+        return new ArrayList<>();
     }
 
     public static void main(String[] args) {
