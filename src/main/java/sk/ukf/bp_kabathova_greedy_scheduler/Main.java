@@ -99,6 +99,9 @@ public class Main extends Application {
             if (!uploadedJobs.isEmpty()) {
                 jobs = uploadedJobs;
                 initialiseSchedulers();
+                showSuccess("File loaded successfully!" );
+            } else {
+                showError("No jobs loaded", "The selected file could not be loaded.");
             }
         });
 
@@ -252,10 +255,26 @@ public class Main extends Application {
             try {
                 return loader.loadFromFile(selectedFile);
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                showError("File Load Error", e.getMessage());
             }
         }
         return new ArrayList<>();
+    }
+
+    private void showError(String header, String message){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showSuccess(String message){
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public static void main(String[] args) {
