@@ -18,6 +18,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 
 public class Main extends Application {
     private TableView<ScheduledJob> tableView = new TableView<>();
@@ -28,10 +29,7 @@ public class Main extends Application {
     private ComboBox<String> algorithmComboBox = new ComboBox<>();
     private TableView<SchedulerResult> resultTableView = new TableView<>();
     private ObservableList<SchedulerResult> displayedResults =  FXCollections.observableArrayList();
-    private HighestProfitScheduler highestProfitScheduler;
-    private EarliestDeadlineScheduler earliestDeadlineScheduler;
-    private ShortestJobFirstScheduler shortestJobFirstScheduler;
-    private ProfitPerDurationScheduler profitPerDurationScheduler;
+    private HashMap<String, GreedyScheduler> schedulers = new HashMap<>();
     StatsBox statsBox = new StatsBox();
     @Override
     public void start(Stage stage) {
@@ -42,7 +40,6 @@ public class Main extends Application {
 
         setTableView();
         setResultTableView();
-        setAlgorithmComboBox();
 
         SplitPane splitPane = new SplitPane(tableView, statsBox);
         splitPane.setOrientation(Orientation.HORIZONTAL);
@@ -81,6 +78,7 @@ public class Main extends Application {
             }
 
             SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
+            setBestResult(best.getAlgorithmName());
             highlightBestResult(best);
             resultTableView.refresh();
 
@@ -178,40 +176,31 @@ public class Main extends Application {
     }
 
     private void setAlgorithmComboBox() {
-        algorithmComboBox.getItems().addAll(
-                "Highest Profit",
-                "Earliest Deadline",
-                "Shortest Job First",
-                "Profit per Duration"
-        );
+        algorithmComboBox.getItems().clear();
+        algorithmComboBox.getItems().addAll( schedulers.keySet());
         algorithmComboBox.getSelectionModel().selectFirst();
     }
 
     private void initialiseSchedulers() {
-        highestProfitScheduler = new HighestProfitScheduler(jobs);
-        earliestDeadlineScheduler = new EarliestDeadlineScheduler(jobs);
-        profitPerDurationScheduler = new ProfitPerDurationScheduler(jobs);
-        shortestJobFirstScheduler = new ShortestJobFirstScheduler(jobs);
+        schedulers.clear();
+
+        schedulers.put("HighestProfitScheduler", new HighestProfitScheduler(jobs));
+        schedulers.put("EarliestDeadlineScheduler", new EarliestDeadlineScheduler(jobs));
+        schedulers.put("ProfitPerDurationScheduler", new ProfitPerDurationScheduler(jobs));
+        schedulers.put("ShortestJobFirstScheduler", new ShortestJobFirstScheduler(jobs));
+
+        setAlgorithmComboBox();
     }
 
     private void runScheduler() {
         String selected = algorithmComboBox.getValue();
-        switch (selected) {
-            case "Highest Profit":
-                getAlgorithmResult(highestProfitScheduler);
-                break;
-            case "Earliest Deadline":
-                getAlgorithmResult(earliestDeadlineScheduler);
-                break;
-            case "Profit per Duration":
-                getAlgorithmResult(profitPerDurationScheduler);
-                break;
-            case "Shortest Job First":
-            default:
-                getAlgorithmResult(shortestJobFirstScheduler);
-                break;
+        GreedyScheduler scheduler = schedulers.get(selected);
+        if  (scheduler != null) {
+            getAlgorithmResult(scheduler);
+            tableView.sort();
+        } else {
+            System.out.println("No scheduler found " +  selected);
         }
-        tableView.sort();
     }
 
     private void getAlgorithmResult(GreedyScheduler greedyScheduler) {
@@ -221,10 +210,18 @@ public class Main extends Application {
         statsBox.createJobsPieChart(result);
     }
 
+    private void setBestResult(String name) {
+        GreedyScheduler scheduler = schedulers.get(name);
+        if (scheduler != null) {
+            getAlgorithmResult(scheduler);
+        } else {
+            System.out.println("Scheduler not found " + name);
+        }
+    }
+
     private void getAllResults(){
         displayedResults.clear();
-        GreedyScheduler[] schedulers = new GreedyScheduler[]{highestProfitScheduler, earliestDeadlineScheduler, profitPerDurationScheduler, shortestJobFirstScheduler};
-        for  (GreedyScheduler scheduler : schedulers) {
+        for  (GreedyScheduler scheduler : schedulers.values()) {
             SchedulerResult schedulerResult = scheduler.getResult();
             displayedResults.add(schedulerResult);
         }
