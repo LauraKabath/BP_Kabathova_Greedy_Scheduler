@@ -1,6 +1,7 @@
 package sk.ukf.bp_kabathova_greedy_scheduler;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -11,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -53,46 +55,37 @@ public class Main extends Application {
         Tab chartsTab = new Tab("Charts", chartBox);
         tabPane.getTabs().add(jobsTab);
 
-        Button runButton = new Button("Run");
-        runButton.setOnAction(e -> {
-            runScheduler();
-        });
-
-        Button runAllButton = new Button("Run All");
-
         WeightsDialog weightsDialog = new WeightsDialog();
 
-        Button weightButton = new Button("Weights");
-        weightButton.setOnAction(e -> weightsDialog.showAndWait());
+        Button runButton = new Button("Run");
+        runButton.setOnAction(e -> runScheduler());
 
-        runAllButton.setOnAction(e -> {
-            getAllResults();
-            chartBox.setResultObservableList(displayedResults);
+        Button runAllButton = new Button("Run All");
+        runAllButton.setOnAction(e -> runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog));
 
-            double profitWeight = weightsDialog.getProfitWeight();
-            double timeWeight = weightsDialog.getTimeWeight();
-            double jobsWeight = weightsDialog.getJobsWeight();
+        HBox controls = new HBox(15);
+        controls.getChildren().addAll( new Label(" Algorithm:"), algorithmComboBox, runButton, runAllButton);
 
-            for (SchedulerResult result : displayedResults) {
-                result.calculateScore(profitWeight, timeWeight, jobsWeight);
-            }
+        MenuBar menuBar = createMenuBar(stage, tabPane, jobsTab, resultTab, chartsTab, chartBox, weightsDialog);
 
-            SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
-            setBestResult(best.getAlgorithmName());
-            highlightBestResult(best);
-            resultTableView.refresh();
+        VBox topContainer = new VBox(menuBar, controls);
 
-            if (!tabPane.getTabs().contains(resultTab)) {
-                tabPane.getTabs().add(resultTab);
-            }
-            if (!tabPane.getTabs().contains(chartsTab)) {
-                tabPane.getTabs().add(chartsTab);
-            }
-            tabPane.getSelectionModel().select(resultTab);
-        });
+        root.setTop(topContainer);
+        root.setCenter(tableView);
+        root.setCenter(tabPane);
 
-        Button uploadButton = new Button("Upload");
-        uploadButton.setOnAction(e -> {
+        Scene scene = new Scene(root, 1100, 700);
+        stage.setTitle("Kabathova Greedy Scheduler");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private MenuBar createMenuBar(Stage stage, TabPane tabPane, Tab jobsTab, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog) {
+        MenuBar menuBar = new MenuBar();
+        // File menu
+        Menu fileMenu = new Menu("File");
+        MenuItem uploadItem = new MenuItem("Upload");
+        uploadItem.setOnAction(e -> {
             ArrayList<Job> uploadedJobs = uploadJobFile(stage);
             if (!uploadedJobs.isEmpty()) {
                 jobs = uploadedJobs;
@@ -103,17 +96,50 @@ public class Main extends Application {
             }
         });
 
-        HBox controls = new HBox(15);
-        controls.getChildren().addAll( new Label(" Algorithm:"), algorithmComboBox, runButton, runAllButton, weightButton, uploadButton);
+        MenuItem exitItem = new MenuItem("Exit");
+        exitItem.setOnAction(e -> Platform.exit());
 
-        root.setTop(controls);
-        root.setCenter(tableView);
-        root.setCenter(tabPane);
+        fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exitItem);
 
-        Scene scene = new Scene(root, 1100, 700);
-        stage.setTitle("Kabathova Greedy Scheduler");
-        stage.setScene(scene);
-        stage.show();
+        // Run menu
+        Menu runMenu = new Menu("Run");
+        MenuItem runItem = new MenuItem("Run Selected");
+        runItem.setOnAction(e -> runScheduler());
+
+        MenuItem runAllItem = new MenuItem("Run All");
+        runAllItem.setOnAction(e -> runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog));
+
+        runMenu.getItems().addAll(runItem, runAllItem);
+
+        // Options menu
+        Menu optionsMenu = new Menu("Options");
+        MenuItem weightsItem = new MenuItem("Weights");
+        weightsItem.setOnAction(e -> weightsDialog.showAndWait());
+
+        optionsMenu.getItems().addAll(weightsItem);
+
+        // View menu
+        Menu viewMenu = new Menu("View");
+        MenuItem viewJobs = new MenuItem("Scheduled Jobs");
+        viewJobs.setOnAction(e -> tabPane.getSelectionModel().select(jobsTab));
+
+        MenuItem viewResults = new MenuItem("Results");
+        viewResults.setOnAction(e -> {
+            if (!tabPane.getTabs().contains(resultTab)) tabPane.getTabs().add(resultTab);
+            tabPane.getSelectionModel().select(resultTab);
+        });
+
+        MenuItem viewCharts = new MenuItem("Charts");
+        viewCharts.setOnAction(e -> {
+            if (!tabPane.getTabs().contains(chartsTab)) tabPane.getTabs().add(chartsTab);
+            tabPane.getSelectionModel().select(chartsTab);
+        });
+
+        viewMenu.getItems().addAll(viewJobs, viewResults, viewCharts);
+
+        menuBar.getMenus().addAll(fileMenu, runMenu, optionsMenu, viewMenu);
+
+        return menuBar;
     }
 
     private void setTableView() {
@@ -201,6 +227,32 @@ public class Main extends Application {
         } else {
             System.out.println("No scheduler found " +  selected);
         }
+    }
+
+    private void runAllSchedulers(TabPane tabPane, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog){
+        getAllResults();
+        chartBox.setResultObservableList(displayedResults);
+
+        double profitWeight = weightsDialog.getProfitWeight();
+        double timeWeight = weightsDialog.getTimeWeight();
+        double jobsWeight = weightsDialog.getJobsWeight();
+
+        for (SchedulerResult result : displayedResults) {
+            result.calculateScore(profitWeight, timeWeight, jobsWeight);
+        }
+
+        SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
+        setBestResult(best.getAlgorithmName());
+        highlightBestResult(best);
+        resultTableView.refresh();
+
+        if (!tabPane.getTabs().contains(resultTab)) {
+            tabPane.getTabs().add(resultTab);
+        }
+        if (!tabPane.getTabs().contains(chartsTab)) {
+            tabPane.getTabs().add(chartsTab);
+        }
+        tabPane.getSelectionModel().select(resultTab);
     }
 
     private void getAlgorithmResult(GreedyScheduler greedyScheduler) {
