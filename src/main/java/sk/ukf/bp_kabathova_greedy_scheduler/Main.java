@@ -62,18 +62,15 @@ public class Main extends Application {
 
         WeightsDialog weightsDialog = new WeightsDialog();
 
-        Button runButton = new Button("Run");
-        runButton.setOnAction(e -> runScheduler());
-
-        Button runAllButton = new Button("Run All");
-        runAllButton.setOnAction(e -> runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog));
-
-        HBox controls = new HBox(15);
-        controls.getChildren().addAll( new Label(" Algorithm:"), algorithmComboBox, runButton, runAllButton);
+        HBox algorithmBar = new HBox(10);
+        algorithmBar.setPadding(new Insets(5));
+        algorithmBar.setAlignment(Pos.CENTER_LEFT);
+        algorithmBar.setStyle("-fx-background-color: rgb(239,239,239); -fx-border-color: rgb(176, 176, 176); -fx-border-width: 0 0 1 0;");
+        algorithmBar.getChildren().addAll( new Label(" Algorithm:"), algorithmComboBox);
 
         MenuBar menuBar = createMenuBar(stage, tabPane, jobsTab, resultTab, chartsTab, chartBox, weightsDialog);
 
-        VBox topContainer = new VBox(menuBar, controls);
+        VBox topContainer = new VBox(menuBar, algorithmBar);
 
         root.setTop(topContainer);
         root.setCenter(tableView);
@@ -113,7 +110,10 @@ public class Main extends Application {
         // Run menu
         Menu runMenu = new Menu("Run");
         MenuItem runItem = new MenuItem("Run Selected");
-        runItem.setOnAction(e -> runScheduler());
+        runItem.setOnAction(e -> {
+            runScheduler();
+            tabPane.getSelectionModel().select(jobsTab);
+        });
 
         MenuItem runAllItem = new MenuItem("Run All");
         runAllItem.setOnAction(e -> runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog));
