@@ -7,7 +7,9 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -17,6 +19,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,13 +30,14 @@ public class Main extends Application {
     private TableView<ScheduledJob> tableView = new TableView<>();
     private ObservableList<ScheduledJob> displayedJobs =  FXCollections.observableArrayList();
     private DataLoader loader = new DataLoader();
-    FileChooser fileChooser = new FileChooser();
+    private FileChooser fileChooser = new FileChooser();
     private ArrayList<Job> jobs;
     private ComboBox<String> algorithmComboBox = new ComboBox<>();
     private TableView<SchedulerResult> resultTableView = new TableView<>();
     private ObservableList<SchedulerResult> displayedResults =  FXCollections.observableArrayList();
     private HashMap<String, GreedyScheduler> schedulers = new HashMap<>();
-    StatsBox statsBox = new StatsBox();
+    private StatsBox statsBox = new StatsBox();
+    private Label statusLabel;
     @Override
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
@@ -73,6 +78,8 @@ public class Main extends Application {
         root.setTop(topContainer);
         root.setCenter(tableView);
         root.setCenter(tabPane);
+        root.setBottom(createStatusBar());
+        updateStatusLabel(null, false);
 
         Scene scene = new Scene(root, 1100, 700);
         stage.setTitle("Kabathova Greedy Scheduler");
@@ -91,6 +98,8 @@ public class Main extends Application {
                 jobs = uploadedJobs;
                 initialiseSchedulers();
                 Toast.show(stage, "Jobs uploaded successfully!", Toast.ToastType.SUCCESS, 2000);
+                updateStatusLabel(null, false);
+
             } else {
                 Toast.show(stage, "Jobs upload failed!", Toast.ToastType.ERROR, 2000);
             }
@@ -177,13 +186,13 @@ public class Main extends Application {
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAlgorithmName()));
 
         TableColumn<SchedulerResult, Integer> scheduledJobsCountCol = new TableColumn<>("Scheduled Jobs");
-        scheduledJobsCountCol.setCellValueFactory(celldata -> new SimpleIntegerProperty(celldata.getValue().getScheduledJobsCount()).asObject());
+        scheduledJobsCountCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getScheduledJobsCount()).asObject());
 
         TableColumn<SchedulerResult, Integer> jobsCountCol = new TableColumn<>("Total number of Jobs");
         jobsCountCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getUnscheduledJobsCount()).asObject());
 
         TableColumn<SchedulerResult, Integer> profitCol = new TableColumn<>("Total profit");
-        profitCol.setCellValueFactory(celldata -> new SimpleIntegerProperty(celldata.getValue().getTotalProfit()).asObject());
+        profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalProfit()).asObject());
 
         TableColumn<SchedulerResult, Integer> timeCol = new TableColumn<>("Total Time");
         timeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalTimeUsed()).asObject());
@@ -224,6 +233,7 @@ public class Main extends Application {
         if  (scheduler != null) {
             getAlgorithmResult(scheduler);
             tableView.sort();
+            updateStatusLabel(selected, true);
         } else {
             System.out.println("No scheduler found " +  selected);
         }
@@ -245,7 +255,7 @@ public class Main extends Application {
         setBestResult(best.getAlgorithmName());
         highlightBestResult(best);
         resultTableView.refresh();
-
+        updateStatusLabel(null, true);
         if (!tabPane.getTabs().contains(resultTab)) {
             tabPane.getTabs().add(resultTab);
         }
@@ -308,6 +318,28 @@ public class Main extends Application {
             }
         }
         return new ArrayList<>();
+    }
+
+    private HBox createStatusBar(){
+        statusLabel = new Label();
+        statusLabel.setPadding(new Insets(5, 10, 5, 10));
+
+        HBox statusBar = new HBox(statusLabel);
+        statusBar.setStyle("-fx-background-color: rgb(239,239,239); -fx-border-color: rgb(176, 176, 176); -fx-border-width: 1 0 0 0;");
+        statusBar.setAlignment(Pos.CENTER_LEFT);
+
+        return statusBar;
+    }
+
+    private void updateStatusLabel(String algorithmName, boolean runInfo){
+        String base = "Dataset: " + loader.getFileName() + " | Jobs: " + jobs.size();
+        if (runInfo) {
+            if (algorithmName != null){
+                base += " | Algorithm: " + algorithmName;
+            }
+            base += " | Last run: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
+        }
+        statusLabel.setText(base);
     }
 
     public static void main(String[] args) {

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 public class DataLoader {
     private ArrayList<Job> jobs;
+    private String fileName;
 
     public DataLoader() {
         jobs = new ArrayList<>();
@@ -14,6 +15,7 @@ public class DataLoader {
     public ArrayList<Job> loadFromResource(String filepath) {
         try {
             InputStream inputStream = getClass().getResourceAsStream(filepath);
+            fileName = filepath.substring(1);
             if (inputStream == null) {
                 throw new FileNotFoundException(filepath + " not found");
             }
@@ -27,6 +29,7 @@ public class DataLoader {
     public ArrayList<Job> loadFromFile(File file) {
         try {
             FileReader fileReader = new FileReader(file);
+            fileName = file.getName();
             loadJobs(fileReader);
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -63,5 +66,9 @@ public class DataLoader {
 
     public ArrayList<Job> getJobs() {
         return jobs;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 }

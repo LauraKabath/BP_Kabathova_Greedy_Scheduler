@@ -1,6 +1,7 @@
 module sk.ukf.bp_kabathova_greedy_scheduler {
     requires javafx.controls;
     requires javafx.fxml;
+    requires java.desktop;
 
 
     opens sk.ukf.bp_kabathova_greedy_scheduler to javafx.fxml;
