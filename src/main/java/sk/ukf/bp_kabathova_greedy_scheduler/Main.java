@@ -12,12 +12,15 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import javax.swing.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -89,6 +92,7 @@ public class Main extends Application {
         // File menu
         Menu fileMenu = new Menu("File");
         MenuItem uploadItem = new MenuItem("Upload");
+        uploadItem.setAccelerator(KeyCombination.keyCombination("CTRL+U"));
         uploadItem.setOnAction(e -> {
             ArrayList<Job> uploadedJobs = uploadJobFile(stage);
             if (!uploadedJobs.isEmpty()) {
@@ -103,6 +107,7 @@ public class Main extends Application {
         });
 
         MenuItem exitItem = new MenuItem("Exit");
+        exitItem.setAccelerator(KeyCombination.keyCombination("CTRL+Q"));
         exitItem.setOnAction(e -> Platform.exit());
 
         fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exitItem);
@@ -110,12 +115,14 @@ public class Main extends Application {
         // Run menu
         Menu runMenu = new Menu("Run");
         MenuItem runItem = new MenuItem("Run Selected");
+        runItem.setAccelerator(KeyCombination.keyCombination("CTRL+R"));
         runItem.setOnAction(e -> {
             runScheduler();
             tabPane.getSelectionModel().select(jobsTab);
         });
 
         MenuItem runAllItem = new MenuItem("Run All");
+        runAllItem.setAccelerator(KeyCombination.keyCombination("CTRL+SHIFT+R"));
         runAllItem.setOnAction(e -> runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog));
 
         runMenu.getItems().addAll(runItem, runAllItem);
@@ -123,6 +130,7 @@ public class Main extends Application {
         // Options menu
         Menu optionsMenu = new Menu("Options");
         MenuItem weightsItem = new MenuItem("Weights");
+        weightsItem.setAccelerator(KeyCombination.keyCombination("CTRL+W"));
         weightsItem.setOnAction(e -> weightsDialog.showAndWait());
 
         optionsMenu.getItems().addAll(weightsItem);
@@ -130,15 +138,18 @@ public class Main extends Application {
         // View menu
         Menu viewMenu = new Menu("View");
         MenuItem viewJobs = new MenuItem("Scheduled Jobs");
+        viewJobs.setAccelerator(KeyCombination.keyCombination("CTRL+1"));
         viewJobs.setOnAction(e -> tabPane.getSelectionModel().select(jobsTab));
 
         MenuItem viewResults = new MenuItem("Results");
+        viewResults.setAccelerator(KeyCombination.keyCombination("CTRL+2"));
         viewResults.setOnAction(e -> {
             if (!tabPane.getTabs().contains(resultTab)) tabPane.getTabs().add(resultTab);
             tabPane.getSelectionModel().select(resultTab);
         });
 
         MenuItem viewCharts = new MenuItem("Charts");
+        viewCharts.setAccelerator(KeyCombination.keyCombination("CTRL+3"));
         viewCharts.setOnAction(e -> {
             if (!tabPane.getTabs().contains(chartsTab)) tabPane.getTabs().add(chartsTab);
             tabPane.getSelectionModel().select(chartsTab);
