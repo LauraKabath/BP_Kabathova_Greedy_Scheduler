@@ -12,6 +12,8 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -19,9 +21,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -92,7 +93,7 @@ public class Main extends Application {
         // File menu
         Menu fileMenu = new Menu("File");
         MenuItem uploadItem = new MenuItem("Upload");
-        uploadItem.setAccelerator(KeyCombination.keyCombination("CTRL+U"));
+        uploadItem.setAccelerator(new KeyCodeCombination(KeyCode.U, KeyCombination.SHORTCUT_DOWN));
         uploadItem.setOnAction(e -> {
             ArrayList<Job> uploadedJobs = uploadJobFile(stage);
             if (!uploadedJobs.isEmpty()) {
@@ -106,23 +107,27 @@ public class Main extends Application {
             }
         });
 
+        MenuItem exportCSVItem = new MenuItem("Export Results as CSV");
+        exportCSVItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN));
+        exportCSVItem.setOnAction(e -> exportResultsCsv(stage));
+
         MenuItem exitItem = new MenuItem("Exit");
-        exitItem.setAccelerator(KeyCombination.keyCombination("CTRL+Q"));
+        exitItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.SHORTCUT_DOWN));
         exitItem.setOnAction(e -> Platform.exit());
 
-        fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exitItem);
+        fileMenu.getItems().addAll(uploadItem, exportCSVItem, new SeparatorMenuItem(), exitItem);
 
         // Run menu
         Menu runMenu = new Menu("Run");
         MenuItem runItem = new MenuItem("Run Selected");
-        runItem.setAccelerator(KeyCombination.keyCombination("CTRL+R"));
+        runItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.SHORTCUT_DOWN));
         runItem.setOnAction(e -> {
             runScheduler();
             tabPane.getSelectionModel().select(jobsTab);
         });
 
         MenuItem runAllItem = new MenuItem("Run All");
-        runAllItem.setAccelerator(KeyCombination.keyCombination("CTRL+SHIFT+R"));
+        runAllItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
         runAllItem.setOnAction(e -> runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog));
 
         runMenu.getItems().addAll(runItem, runAllItem);
@@ -130,7 +135,7 @@ public class Main extends Application {
         // Options menu
         Menu optionsMenu = new Menu("Options");
         MenuItem weightsItem = new MenuItem("Weights");
-        weightsItem.setAccelerator(KeyCombination.keyCombination("CTRL+W"));
+        weightsItem.setAccelerator(new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN));
         weightsItem.setOnAction(e -> weightsDialog.showAndWait());
 
         optionsMenu.getItems().addAll(weightsItem);
@@ -138,18 +143,18 @@ public class Main extends Application {
         // View menu
         Menu viewMenu = new Menu("View");
         MenuItem viewJobs = new MenuItem("Scheduled Jobs");
-        viewJobs.setAccelerator(KeyCombination.keyCombination("CTRL+1"));
+        viewJobs.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT1, KeyCombination.SHORTCUT_DOWN));
         viewJobs.setOnAction(e -> tabPane.getSelectionModel().select(jobsTab));
 
         MenuItem viewResults = new MenuItem("Results");
-        viewResults.setAccelerator(KeyCombination.keyCombination("CTRL+2"));
+        viewResults.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT2, KeyCombination.SHORTCUT_DOWN));
         viewResults.setOnAction(e -> {
             if (!tabPane.getTabs().contains(resultTab)) tabPane.getTabs().add(resultTab);
             tabPane.getSelectionModel().select(resultTab);
         });
 
         MenuItem viewCharts = new MenuItem("Charts");
-        viewCharts.setAccelerator(KeyCombination.keyCombination("CTRL+3"));
+        viewCharts.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT3, KeyCombination.SHORTCUT_DOWN));
         viewCharts.setOnAction(e -> {
             if (!tabPane.getTabs().contains(chartsTab)) tabPane.getTabs().add(chartsTab);
             tabPane.getSelectionModel().select(chartsTab);
@@ -329,6 +334,45 @@ public class Main extends Application {
             }
         }
         return new ArrayList<>();
+    }
+
+    private void exportResultsCsv(Stage stage){
+        if (displayedResults == null || displayedResults.isEmpty()) {
+            Toast.show(stage, "No results to export!", Toast.ToastType.WARNING, 3000);
+            return;
+        }
+
+        fileChooser.setTitle("Save results CSV");
+        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        fileChooser.setInitialFileName("schedulers_results.csv");
+
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) return;
+
+        PrintWriter writer = null;
+        try{
+            writer = new PrintWriter(file);
+            writer.println("Algorithm,Scheduled Jobs,Total Jobs Count,Profit,Total time,Execution Time,Score");
+            for (SchedulerResult result : displayedResults) {
+                writer.println(result.getAlgorithmName() + ","
+                        + result.getScheduledJobsCount() + ","
+                        + result.getUnscheduledJobsCount() + ","
+                        + result.getTotalProfit() + ","
+                        + result.getTotalTimeUsed() + ","
+                        + result.getExecutionTimeMillis() + ","
+                        + result.getScore());
+            }
+            Toast.show(stage, "Results exported successfully!", Toast.ToastType.SUCCESS, 2500);
+        } catch (Exception exception){
+            Toast.show(stage, "Error exporting results!", Toast.ToastType.ERROR, 2500);
+            System.out.println(exception.getMessage());
+        } finally {
+            try {
+                if  (writer != null) writer.close();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 
     private HBox createStatusBar(){
