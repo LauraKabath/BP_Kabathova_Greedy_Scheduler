@@ -274,7 +274,11 @@ public class Main extends Application {
         SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
         setBestResult(best.getAlgorithmName());
         highlightBestResult(best);
+
+        ArrayList<TableColumn<SchedulerResult, ?>> sortOrder = new ArrayList<>(resultTableView.getSortOrder());
         resultTableView.refresh();
+        resultTableView.getSortOrder().setAll(sortOrder);
+        resultTableView.sort();
         updateStatusLabel(null, true);
         if (!tabPane.getTabs().contains(resultTab)) {
             tabPane.getTabs().add(resultTab);
