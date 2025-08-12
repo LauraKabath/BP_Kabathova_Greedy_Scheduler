@@ -107,15 +107,19 @@ public class Main extends Application {
             }
         });
 
-        MenuItem exportCSVItem = new MenuItem("Export Results as CSV");
-        exportCSVItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN));
-        exportCSVItem.setOnAction(e -> exportResultsCsv(stage));
+        MenuItem exportResultItem = new MenuItem("Export Results CSV");
+        exportResultItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN));
+        exportResultItem.setOnAction(e -> exportTableViewToCSV(stage, resultTableView, "results.csv"));
+
+        MenuItem exportJobsItem = new MenuItem("Export Jobs CSV");
+        exportJobsItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.SHORTCUT_DOWN));
+        exportJobsItem.setOnAction(e -> exportTableViewToCSV(stage, tableView, "jobs.csv"));
 
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.SHORTCUT_DOWN));
         exitItem.setOnAction(e -> Platform.exit());
 
-        fileMenu.getItems().addAll(uploadItem, exportCSVItem, new SeparatorMenuItem(), exitItem);
+        fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exportJobsItem, exportResultItem, new SeparatorMenuItem(), exitItem);
 
         // Run menu
         Menu runMenu = new Menu("Run");
@@ -323,6 +327,7 @@ public class Main extends Application {
 
     private ArrayList<Job> uploadJobFile(Stage stage){
         fileChooser.setTitle("Select .csv file");
+        fileChooser.getExtensionFilters().clear();
         fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("CSV Files", "*.csv"));
 
         File selectedFile = fileChooser.showOpenDialog(stage);
@@ -336,35 +341,45 @@ public class Main extends Application {
         return new ArrayList<>();
     }
 
-    private void exportResultsCsv(Stage stage){
-        if (displayedResults == null || displayedResults.isEmpty()) {
-            Toast.show(stage, "No results to export!", Toast.ToastType.WARNING, 3000);
+    private void exportTableViewToCSV(Stage stage, TableView<?> tableView, String initialFilename){
+        if (tableView.getItems().isEmpty()){
+            Toast.show(stage, "No data to export!", Toast.ToastType.WARNING, 3000);
             return;
         }
 
-        fileChooser.setTitle("Save results CSV");
+        fileChooser.setTitle("Save data to CSV");
+        fileChooser.getExtensionFilters().clear();
         fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("CSV Files", "*.csv"));
-        fileChooser.setInitialFileName("schedulers_results.csv");
+        fileChooser.setInitialFileName(initialFilename);
 
         File file = fileChooser.showSaveDialog(stage);
         if (file == null) return;
 
+        int rowCount = tableView.getItems().size();
+        int columnCount = tableView.getColumns().size();
+
         PrintWriter writer = null;
         try{
             writer = new PrintWriter(file);
-            writer.println("Algorithm,Scheduled Jobs,Total Jobs Count,Profit,Total time,Execution Time,Score");
-            for (SchedulerResult result : displayedResults) {
-                writer.println(result.getAlgorithmName() + ","
-                        + result.getScheduledJobsCount() + ","
-                        + result.getUnscheduledJobsCount() + ","
-                        + result.getTotalProfit() + ","
-                        + result.getTotalTimeUsed() + ","
-                        + result.getExecutionTimeMillis() + ","
-                        + result.getScore());
+
+            for (int i = 0; i < columnCount; i++) {
+                writer.print(formatCsvField(tableView.getColumns().get(i).getText()));
+                if (i < columnCount - 1) writer.print(",");
             }
-            Toast.show(stage, "Results exported successfully!", Toast.ToastType.SUCCESS, 2500);
+            writer.println();
+
+            for  (int r = 0; r < rowCount; r++) {
+                for (int c = 0; c < columnCount; c++) {
+                    Object cellData = tableView.getColumns().get(c).getCellData(r);
+                    if (cellData != null) writer.print(formatCsvField(cellData.toString()));
+                    if (c < columnCount - 1) writer.print(",");
+                }
+                writer.println();
+            }
+
+            Toast.show(stage, "CSV exported successfully!", Toast.ToastType.SUCCESS, 2500);
         } catch (Exception exception){
-            Toast.show(stage, "Error exporting results!", Toast.ToastType.ERROR, 2500);
+            Toast.show(stage, "Error exporting CSV!", Toast.ToastType.ERROR, 2500);
             System.out.println(exception.getMessage());
         } finally {
             try {
@@ -373,6 +388,14 @@ public class Main extends Application {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+    private String formatCsvField(String s){
+        if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
+            s = s.replace("\"", "\"\"");
+            return "\"" + s + "\"";
+        }
+        return s;
     }
 
     private HBox createStatusBar(){
