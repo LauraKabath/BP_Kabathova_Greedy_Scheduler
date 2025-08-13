@@ -12,17 +12,22 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.util.function.Consumer;
+
 public class WeightsDialog {
     private final Slider profitSlider;
     private final Slider timeSlider;
     private final Slider jobsSlider;
+    private double originalProfitWeight = 5;
+    private double originalTimeWeight = 2;
+    private double originalJobsWeight = 3;
     private Stage popupStage;
 
-    public WeightsDialog() {
-        profitSlider = createSlider(0, 10, 5);
-        timeSlider = createSlider(0, 10, 2);
-        jobsSlider = createSlider(0, 10, 3);
-        initPopupStage();
+    public WeightsDialog(Consumer<double[]> onSave) {
+        profitSlider = createSlider(0, 10, originalProfitWeight);
+        timeSlider = createSlider(0, 10, originalTimeWeight);
+        jobsSlider = createSlider(0, 10, originalJobsWeight);
+        initPopupStage(onSave);
     }
 
     private Slider createSlider(double min, double max, double value) {
@@ -35,7 +40,7 @@ public class WeightsDialog {
         return slider;
     }
 
-    private void initPopupStage(){
+    private void initPopupStage(Consumer<double[]> onSave){
         popupStage = new Stage();
         popupStage.initModality(Modality.APPLICATION_MODAL);
         popupStage.setTitle("Weights Settings");
@@ -50,7 +55,14 @@ public class WeightsDialog {
         Label jobsValue = createLabel(jobsSlider);
 
         Button saveButton = new Button("Save");
-        saveButton.setOnAction(e -> popupStage.close());
+        saveButton.setOnAction(e -> {
+            if (onSave != null) {
+                onSave.accept(getWeights());
+            }
+            popupStage.close();
+        });
+
+        popupStage.setOnCloseRequest(e -> setOriginalValues());
 
         GridPane gridPane = new GridPane();
         gridPane.setHgap(10);
@@ -91,13 +103,31 @@ public class WeightsDialog {
         return label;
     }
 
-    public void showAndWait() {
+    public void showAndWait(double[] weights) {
+        profitSlider.setValue(weights[0]);
+        timeSlider.setValue(weights[1]);
+        jobsSlider.setValue(weights[2]);
+
+        originalProfitWeight = getProfitWeight();
+        originalTimeWeight = getTimeWeight();
+        originalJobsWeight =getJobsWeight();
+
         popupStage.showAndWait();
     }
 
     public double getProfitWeight() { return profitSlider.getValue(); }
     public double getTimeWeight() { return timeSlider.getValue(); }
     public double getJobsWeight() { return jobsSlider.getValue(); }
+
+    public double[] getWeights(){
+        return new double[]{getProfitWeight(), getTimeWeight(), getJobsWeight()};
+    }
+
+    private void setOriginalValues(){
+        profitSlider.setValue(originalProfitWeight);
+        timeSlider.setValue(originalTimeWeight);
+        jobsSlider.setValue(originalJobsWeight);
+    }
 
 }
 

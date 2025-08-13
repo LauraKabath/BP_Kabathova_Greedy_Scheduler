@@ -64,7 +64,12 @@ public class Main extends Application {
         Tab chartsTab = new Tab("Charts", chartBox);
         tabPane.getTabs().add(jobsTab);
 
-        WeightsDialog weightsDialog = new WeightsDialog();
+        WeightsDialog weightsDialog = new WeightsDialog(weights -> {
+            double profitWeight = weights[0];
+            double timeWeight = weights[1];
+            double jobsWeight = weights[2];
+            applyWeightUpdate(profitWeight, timeWeight, jobsWeight);
+        });
 
         HBox algorithmBar = new HBox(10);
         algorithmBar.setPadding(new Insets(5));
@@ -140,7 +145,7 @@ public class Main extends Application {
         Menu optionsMenu = new Menu("Options");
         MenuItem weightsItem = new MenuItem("Weights");
         weightsItem.setAccelerator(new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN));
-        weightsItem.setOnAction(e -> weightsDialog.showAndWait());
+        weightsItem.setOnAction(e -> weightsDialog.showAndWait(weightsDialog.getWeights()));
 
         optionsMenu.getItems().addAll(weightsItem);
 
@@ -271,9 +276,7 @@ public class Main extends Application {
             result.calculateScore(profitWeight, timeWeight, jobsWeight);
         }
 
-        SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
-        setBestResult(best.getAlgorithmName());
-        highlightBestResult(best);
+        getBestResult();
 
         ArrayList<TableColumn<SchedulerResult, ?>> sortOrder = new ArrayList<>(resultTableView.getSortOrder());
         resultTableView.refresh();
@@ -294,6 +297,12 @@ public class Main extends Application {
         displayedJobs.setAll(greedyScheduler.getScheduledJobs());
         statsBox.updateLabels(result.getAlgorithmName(), result.getTotalProfit(), result.getTotalTimeUsed(), result.getExecutionTimeMillis());
         statsBox.createJobsPieChart(result);
+    }
+
+    private void getBestResult() {
+        SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
+        setBestResult(best.getAlgorithmName());
+        highlightBestResult(best);
     }
 
     private void setBestResult(String name) {
@@ -327,6 +336,15 @@ public class Main extends Application {
                 }
             }
         });
+    }
+
+    private void applyWeightUpdate(double profitWeight, double timeWeight, double jobsWeight) {
+        for (SchedulerResult result : displayedResults) {
+            result.calculateScore(profitWeight, timeWeight, jobsWeight);
+        }
+        getBestResult();
+        resultTableView.refresh();
+        resultTableView.sort();
     }
 
     private ArrayList<Job> uploadJobFile(Stage stage){
