@@ -235,6 +235,33 @@ public class Main extends Application {
         resultTableView.setItems(displayedResults);
     }
 
+    private void setupResultTableViewInteractions(SchedulerResult bestResult) {
+        resultTableView.setRowFactory(tv -> {
+            TableRow<SchedulerResult> row = new TableRow<>() {
+                @Override
+                public void updateItem(SchedulerResult item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (item == null || empty) {
+                        setStyle("");
+                    } else if (item.getAlgorithmName().equals(bestResult.getAlgorithmName())) {
+                        setStyle("-fx-background-color: gold; -fx-border-color: #d5b000;");
+                    } else {
+                        setStyle("");
+                    }
+                }
+            };
+
+            row.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && !row.isEmpty()) {
+                    SchedulerResult schedulerResult = row.getItem();
+                    SchedulerDetailsDialog schedulerDetailsDialog = new SchedulerDetailsDialog(schedulerResult.getAlgorithmName(), schedulers.get(schedulerResult.getAlgorithmName()).getScheduledJobs());
+                    schedulerDetailsDialog.showAndWait();
+                }
+            });
+            return row;
+        });
+    }
+
     private void setAlgorithmComboBox() {
         algorithmComboBox.getItems().clear();
         algorithmComboBox.getItems().addAll( schedulers.keySet());
@@ -276,10 +303,9 @@ public class Main extends Application {
             result.calculateScore(profitWeight, timeWeight, jobsWeight);
         }
 
-        getBestResult();
-
         ArrayList<TableColumn<SchedulerResult, ?>> sortOrder = new ArrayList<>(resultTableView.getSortOrder());
         resultTableView.refresh();
+        setupResultTableViewInteractions(getBestResult());
         resultTableView.getSortOrder().setAll(sortOrder);
         resultTableView.sort();
         updateStatusLabel(null, true);
@@ -299,10 +325,10 @@ public class Main extends Application {
         statsBox.createJobsPieChart(result);
     }
 
-    private void getBestResult() {
+    private SchedulerResult getBestResult() {
         SchedulerResult best = Collections.max(displayedResults, Comparator.comparingDouble(SchedulerResult::getScore));
         setBestResult(best.getAlgorithmName());
-        highlightBestResult(best);
+        return best;
     }
 
     private void setBestResult(String name) {
@@ -322,28 +348,13 @@ public class Main extends Application {
         }
     }
 
-    private void highlightBestResult(SchedulerResult bestResult) {
-        resultTableView.setRowFactory(tv -> new TableRow<>() {
-            @Override
-            protected void updateItem(SchedulerResult item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setStyle("");
-                } else if (item.getAlgorithmName().equals(bestResult.getAlgorithmName())) {
-                    setStyle("-fx-background-color: #fff8dc; -fx-border-color: gold;");
-                } else {
-                    setStyle("");
-                }
-            }
-        });
-    }
-
     private void applyWeightUpdate(double profitWeight, double timeWeight, double jobsWeight) {
         for (SchedulerResult result : displayedResults) {
             result.calculateScore(profitWeight, timeWeight, jobsWeight);
         }
-        getBestResult();
+
         resultTableView.refresh();
+        setupResultTableViewInteractions(getBestResult());
         resultTableView.sort();
     }
 
