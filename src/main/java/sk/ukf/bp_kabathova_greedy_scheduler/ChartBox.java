@@ -114,4 +114,20 @@ public class ChartBox extends HBox {
         }
         totalTimeBarChart.getData().add(series);
     }
+
+    public BarChart<String, Number> getProfitBarChart() {
+        return profitBarChart;
+    }
+
+    public BarChart<String, Number> getExecutionTimeBarChart() {
+        return executionTimeBarChart;
+    }
+
+    public BarChart<String, Number> getJobsBarChart() {
+        return jobsBarChart;
+    }
+
+    public BarChart<String, Number> getTotalTimeBarChart() {
+        return totalTimeBarChart;
+    }
 }

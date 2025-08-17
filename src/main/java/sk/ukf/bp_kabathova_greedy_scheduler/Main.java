@@ -11,7 +11,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.chart.Chart;
 import javafx.scene.control.*;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -21,6 +24,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
+import javafx.embed.swing.SwingFXUtils;
 import java.io.File;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
@@ -120,11 +125,40 @@ public class Main extends Application {
         exportJobsItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.SHORTCUT_DOWN));
         exportJobsItem.setOnAction(e -> exportTableViewToCSV(stage, tableView, "jobs.csv"));
 
+        MenuItem exportAllChartsItem = new MenuItem("Export All Charts PNG");
+        exportAllChartsItem.setAccelerator(new KeyCodeCombination(KeyCode.A, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
+        exportAllChartsItem.setOnAction(e -> exportAllCharts(stage, chartBox));
+        exportAllChartsItem.setDisable(true);
+
+        // Charts menu
+        Menu chartsMenu = new Menu("Export Chart PNG");
+        MenuItem profitChartItem = new MenuItem("Profit Chart");
+        profitChartItem.setAccelerator(new KeyCodeCombination(KeyCode.P, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
+        profitChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getProfitBarChart(), "profit_chart.png"));
+        profitChartItem.setDisable(true);
+
+        MenuItem executionTimeChartItem = new MenuItem("Execution Time Chart");
+        executionTimeChartItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
+        executionTimeChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getExecutionTimeBarChart(), "execution_time_chart.png"));
+        executionTimeChartItem.setDisable(true);
+
+        MenuItem jobsChartItem = new MenuItem("Jobs Chart");
+        jobsChartItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
+        jobsChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getJobsBarChart(), "jobs_chart.png"));
+        jobsChartItem.setDisable(true);
+
+        MenuItem totalTimeChartItem = new MenuItem("Total Time Chart");
+        totalTimeChartItem.setAccelerator(new KeyCodeCombination(KeyCode.T, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
+        totalTimeChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getTotalTimeBarChart(), "total_time_chart.png"));
+        totalTimeChartItem.setDisable(true);
+
+        chartsMenu.getItems().addAll(profitChartItem, executionTimeChartItem, jobsChartItem, totalTimeChartItem);
+
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.SHORTCUT_DOWN));
         exitItem.setOnAction(e -> Platform.exit());
 
-        fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exportJobsItem, exportResultItem, new SeparatorMenuItem(), exitItem);
+        fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exportJobsItem, exportResultItem, exportAllChartsItem, chartsMenu, new SeparatorMenuItem(), exitItem);
 
         // Run menu
         Menu runMenu = new Menu("Run");
@@ -137,7 +171,14 @@ public class Main extends Application {
 
         MenuItem runAllItem = new MenuItem("Run All");
         runAllItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
-        runAllItem.setOnAction(e -> runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog));
+        runAllItem.setOnAction(e -> {
+            runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog);
+            exportAllChartsItem.setDisable(false);
+            profitChartItem.setDisable(false);
+            executionTimeChartItem.setDisable(false);
+            jobsChartItem.setDisable(false);
+            totalTimeChartItem.setDisable(false);
+        });
 
         runMenu.getItems().addAll(runItem, runAllItem);
 
@@ -429,6 +470,44 @@ public class Main extends Application {
             return "\"" + s + "\"";
         }
         return s;
+    }
+
+    private void exportSingleChart(Stage stage, Chart chart, String initialFilename){
+        fileChooser.setTitle("Save Chart as PNG");
+        fileChooser.getExtensionFilters().clear();
+        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("PNG Images", "*.png"));
+        fileChooser.setInitialFileName(initialFilename);
+
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) return;
+
+        try{
+            WritableImage image = chart.snapshot(new SnapshotParameters(), null);
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+            Toast.show(stage, "Chart exported  successfully!", Toast.ToastType.SUCCESS, 2500);
+        } catch (Exception e){
+            Toast.show(stage, "Error exporting chart!", Toast.ToastType.ERROR, 2500);
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void exportAllCharts(Stage stage, ChartBox chartBox){
+        fileChooser.setTitle("Save All Charts as PNG");
+        fileChooser.getExtensionFilters().clear();
+        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("PNG Images", "*.png"));
+        fileChooser.setInitialFileName("all_charts.png");
+
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) return;
+
+        try{
+            WritableImage image = chartBox.snapshot(new SnapshotParameters(), null);
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+            Toast.show(stage, "All charts exported  successfully!", Toast.ToastType.SUCCESS, 2500);
+        } catch (Exception e) {
+            Toast.show(stage, "Error exporting charts!", Toast.ToastType.ERROR, 2500);
+            System.out.println(e.getMessage());
+        }
     }
 
     private HBox createStatusBar(){
