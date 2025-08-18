@@ -20,6 +20,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -46,6 +47,7 @@ public class Main extends Application {
     private ObservableList<SchedulerResult> displayedResults =  FXCollections.observableArrayList();
     private HashMap<String, GreedyScheduler> schedulers = new HashMap<>();
     private StatsBox statsBox = new StatsBox();
+    private ComparisonBox comparisonBox = new ComparisonBox();
     private Label statusLabel;
     @Override
     public void start(Stage stage) {
@@ -61,10 +63,13 @@ public class Main extends Application {
         splitPane.setOrientation(Orientation.HORIZONTAL);
         splitPane.setDividerPositions(0.6);
 
+        VBox resultsTabLayout = new VBox(10, resultTableView, comparisonBox);
+        VBox.setVgrow(resultTableView, Priority.ALWAYS);
+
         TabPane tabPane = new TabPane();
         Tab jobsTab = new Tab("Scheduled Jobs", splitPane);
         jobsTab.setClosable(false);
-        Tab resultTab = new Tab("Results", resultTableView);
+        Tab resultTab = new Tab("Results", resultsTabLayout);
         ChartBox chartBox = new ChartBox(displayedResults);
         Tab chartsTab = new Tab("Charts", chartBox);
         tabPane.getTabs().add(jobsTab);
@@ -343,6 +348,7 @@ public class Main extends Application {
         for (SchedulerResult result : displayedResults) {
             result.calculateScore(profitWeight, timeWeight, jobsWeight);
         }
+        comparisonBox.update(displayedResults);
 
         ArrayList<TableColumn<SchedulerResult, ?>> sortOrder = new ArrayList<>(resultTableView.getSortOrder());
         resultTableView.refresh();
@@ -396,6 +402,7 @@ public class Main extends Application {
 
         resultTableView.refresh();
         setupResultTableViewInteractions(getBestResult());
+        comparisonBox.update(displayedResults);
         resultTableView.sort();
     }
 
@@ -484,7 +491,7 @@ public class Main extends Application {
         try{
             WritableImage image = chart.snapshot(new SnapshotParameters(), null);
             ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-            Toast.show(stage, "Chart exported  successfully!", Toast.ToastType.SUCCESS, 2500);
+            Toast.show(stage, "Chart exported successfully!", Toast.ToastType.SUCCESS, 2500);
         } catch (Exception e){
             Toast.show(stage, "Error exporting chart!", Toast.ToastType.ERROR, 2500);
             System.out.println(e.getMessage());
@@ -503,7 +510,7 @@ public class Main extends Application {
         try{
             WritableImage image = chartBox.snapshot(new SnapshotParameters(), null);
             ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-            Toast.show(stage, "All charts exported  successfully!", Toast.ToastType.SUCCESS, 2500);
+            Toast.show(stage, "All charts exported successfully!", Toast.ToastType.SUCCESS, 2500);
         } catch (Exception e) {
             Toast.show(stage, "Error exporting charts!", Toast.ToastType.ERROR, 2500);
             System.out.println(e.getMessage());
