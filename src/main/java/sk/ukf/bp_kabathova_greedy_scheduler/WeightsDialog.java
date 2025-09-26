@@ -43,18 +43,18 @@ public class WeightsDialog {
     private void initPopupStage(Consumer<double[]> onSave){
         popupStage = new Stage();
         popupStage.initModality(Modality.APPLICATION_MODAL);
-        popupStage.setTitle("Weights Settings");
+        popupStage.setTitle("Nastavenia váh");
 
-        Label profitLabel = new Label("Profit Weight:");
+        Label profitLabel = new Label("Váha zisku:");
         Label profitValue = createLabel(profitSlider);
 
-        Label timeLabel = new Label("Execution Time Weight:");
+        Label timeLabel = new Label("Váha času vykonania:");
         Label timeValue = createLabel(timeSlider);
 
-        Label jobsLabel = new Label("Scheduled Jobs Weight:");
+        Label jobsLabel = new Label("Váha počtu úloh:");
         Label jobsValue = createLabel(jobsSlider);
 
-        Button saveButton = new Button("Save");
+        Button saveButton = new Button("Uložiť");
         saveButton.setOnAction(e -> {
             if (onSave != null) {
                 onSave.accept(getWeights());

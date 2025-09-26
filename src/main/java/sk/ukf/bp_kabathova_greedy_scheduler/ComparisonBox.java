@@ -36,10 +36,10 @@ public class ComparisonBox extends HBox {
         Label title = new Label(result.getAlgorithmName());
         title.setStyle("-fx-font-weight: bold; -fx-font-size: 14;");
 
-        Label profit = new Label("Profit: " + result.getTotalProfit());
-        Label executionTime = new Label("Time: " + result.getExecutionTimeMillis() + " ms");
-        Label jobs = new Label("Scheduled Jobs: " + result.getScheduledJobsCount() + "/" + result.getUnscheduledJobsCount());
-        Label score = new Label("Score: " + result.getScore());
+        Label profit = new Label("Zisk: " + result.getTotalProfit());
+        Label executionTime = new Label("Čas: " + result.getExecutionTimeMillis() + " ms");
+        Label jobs = new Label("Plánované úlohy: " + result.getScheduledJobsCount() + "/" + result.getUnscheduledJobsCount());
+        Label score = new Label("Skóre: " + result.getScore());
 
         VBox card = new VBox(5, title, profit, executionTime, jobs, score);
         card.setPadding(new Insets(10));

@@ -25,24 +25,24 @@ public class SchedulerDetailsDialog {
     private void setupTableView(ArrayList<ScheduledJob> scheduledJobs) {
         jobsTableView = new TableView<>();
 
-        TableColumn<ScheduledJob, String> idCol = new TableColumn<>("Job ID");
+        TableColumn<ScheduledJob, String> idCol = new TableColumn<>("ID úlohy");
         idCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getID()));
         idCol.setMinWidth(140);
 
-        TableColumn<ScheduledJob, Integer> profitCol = new TableColumn<>("Profit");
+        TableColumn<ScheduledJob, Integer> profitCol = new TableColumn<>("Zisk");
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
         profitCol.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<ScheduledJob, Integer> startTimeCol = new TableColumn<>("Start Time");
+        TableColumn<ScheduledJob, Integer> startTimeCol = new TableColumn<>("Začiatok");
         startTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getStartTime()).asObject());
         startTimeCol.setSortType(TableColumn.SortType.ASCENDING);
         startTimeCol.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<ScheduledJob, Integer> endTimeCol = new TableColumn<>("End Time");
+        TableColumn<ScheduledJob, Integer> endTimeCol = new TableColumn<>("Koniec");
         endTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getEndTime()).asObject());
         endTimeCol.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<ScheduledJob, Integer> durationCol = new TableColumn<>("Duration");
+        TableColumn<ScheduledJob, Integer> durationCol = new TableColumn<>("Trvanie");
         durationCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDuration()).asObject());
         durationCol.setStyle("-fx-alignment: CENTER;");
 
@@ -60,7 +60,7 @@ public class SchedulerDetailsDialog {
     private void initDetailsDialog(String name) {
         detailsStage = new Stage();
         detailsStage.initModality(Modality.APPLICATION_MODAL);
-        detailsStage.setTitle(name + " - Jobs Execution Order");
+        detailsStage.setTitle(name + " - poradie vykonávania úloh");
 
         VBox layout = new VBox(10, jobsTableView);
         layout.setPadding(new Insets(15));

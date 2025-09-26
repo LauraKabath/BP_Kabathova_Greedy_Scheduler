@@ -23,9 +23,9 @@ public class StatsBox extends VBox {
 
     public StatsBox() {
         algorithmNameLabel = new Label();
-        profitLabel = new Label("Profit: 0");
-        executionTimeLabel = new Label("Execution Time: 0");
-        totalTimeLabel = new Label("Total Time: 0");
+        profitLabel = new Label("Zisk: 0");
+        executionTimeLabel = new Label("Čas vykonania: 0");
+        totalTimeLabel = new Label("Celkový čas: 0");
         pieChartCaption = new Label();
         pieChartCaption.setTextFill(Color.BLACK);
         pieChartCaption.setStyle("-fx-background-color: white; -fx-border-color: black; -fx-padding: 2;");
@@ -43,9 +43,9 @@ public class StatsBox extends VBox {
 
     public void updateLabels(String name, int profit, int totalTime, double executionTime) {
         algorithmNameLabel.setText(name);
-        profitLabel.setText("Profit: " + profit);
-        totalTimeLabel.setText("Total Time: " + totalTime);
-        executionTimeLabel.setText("Execution Time: " + executionTime);
+        profitLabel.setText("Zisk: " + profit);
+        executionTimeLabel.setText("Čas vykonania: " + executionTime + " ms");
+        totalTimeLabel.setText("Celkový čas: " + totalTime);
     }
 
     public void createJobsPieChart(SchedulerResult result) {
@@ -53,12 +53,12 @@ public class StatsBox extends VBox {
         int scheduled = result.getScheduledJobsCount();
         int unscheduled = result.getUnscheduledJobsCount() - scheduled;
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
-                new PieChart.Data("Scheduled", scheduled),
-                new PieChart.Data("Unscheduled", unscheduled)
+                new PieChart.Data("Plánované", scheduled),
+                new PieChart.Data("Neplánované", unscheduled)
         );
 
         pieChart.setData(pieChartData);
-        pieChart.setTitle("Job Scheduling overview");
+        pieChart.setTitle("Prehľad plánovania úloh");
         pieChart.setLabelsVisible(true);
         pieChart.setLegendVisible(true);
 

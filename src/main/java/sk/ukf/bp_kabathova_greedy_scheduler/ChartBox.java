@@ -46,12 +46,12 @@ public class ChartBox extends HBox {
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
         profitBarChart = new BarChart<>(xAxis, yAxis);
-        profitBarChart.setTitle("Total Profit per Algorithm");
-        xAxis.setLabel("Algorithm");
-        yAxis.setLabel("Total Profit");
+        profitBarChart.setTitle("Celkový zisk na algoritmus");
+        xAxis.setLabel("Algoritmus");
+        yAxis.setLabel("Celkový zisk");
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Profit");
+        series.setName("Zisk");
 
         for (SchedulerResult result : resultObservableList) {
             series.getData().add(new XYChart.Data<>(result.getAlgorithmName(), result.getTotalProfit()));
@@ -64,12 +64,12 @@ public class ChartBox extends HBox {
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
         executionTimeBarChart = new BarChart<>(xAxis, yAxis);
-        executionTimeBarChart.setTitle("Execution Times of Algorithms");
-        xAxis.setLabel("Algorithm");
-        yAxis.setLabel("Execution Time (ms)");
+        executionTimeBarChart.setTitle("Časy vykonania algoritmov");
+        xAxis.setLabel("Algoritmus");
+        yAxis.setLabel("Čas vykonania (ms)");
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Execution Time");
+        series.setName("Čas vykonania");
 
         for (SchedulerResult result : resultObservableList) {
             series.getData().add(new XYChart.Data<>(result.getAlgorithmName(), result.getExecutionTimeMillis()));
@@ -82,15 +82,15 @@ public class ChartBox extends HBox {
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
         jobsBarChart = new BarChart<>(xAxis, yAxis);
-        jobsBarChart.setTitle("Jobs Scheduling Overview");
-        xAxis.setLabel("Algorithm");
-        yAxis.setLabel("Value");
+        jobsBarChart.setTitle("Prehľad plánovania úloh");
+        xAxis.setLabel("Algoritmus");
+        yAxis.setLabel("Hodnota");
 
         XYChart.Series<String, Number> seriesScheduled = new XYChart.Series<>();
-        seriesScheduled.setName("Scheduled Jobs");
+        seriesScheduled.setName("Plánované úlohy");
 
         XYChart.Series<String, Number> seriesUnscheduled = new XYChart.Series<>();
-        seriesUnscheduled.setName("Unscheduled Jobs");
+        seriesUnscheduled.setName("Neplánované úlohy");
 
         for (SchedulerResult result : resultObservableList) {
             seriesScheduled.getData().add(new XYChart.Data<>(result.getAlgorithmName(), result.getScheduledJobsCount()));
@@ -104,11 +104,11 @@ public class ChartBox extends HBox {
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
         totalTimeBarChart = new BarChart<>(xAxis, yAxis);
-        totalTimeBarChart.setTitle("Total Time Used");
-        xAxis.setLabel("Algorithm");
-        yAxis.setLabel("Total Time");
+        totalTimeBarChart.setTitle("Celkový použitý čas");
+        xAxis.setLabel("Algoritmus");
+        yAxis.setLabel("Celkový čas");
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Total Time Used");
+        series.setName("Celkový použitý čas");
         for (SchedulerResult result : resultObservableList) {
             series.getData().add(new XYChart.Data<>(result.getAlgorithmName(), result.getTotalTimeUsed()));
         }
