@@ -37,6 +37,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 public class Main extends Application {
+    private TableView<Job> dataTableView =  new TableView<>();
     private TableView<ScheduledJob> tableView = new TableView<>();
     private ObservableList<ScheduledJob> displayedJobs =  FXCollections.observableArrayList();
     private DataLoader loader = new DataLoader();
@@ -56,6 +57,7 @@ public class Main extends Application {
         jobs = loader.loadFromResource("/JobSampleData.csv");
         initialiseSchedulers();
 
+        setDatasetTableView();
         setTableView();
         setResultTableView();
 
@@ -67,12 +69,13 @@ public class Main extends Application {
         VBox.setVgrow(resultTableView, Priority.ALWAYS);
 
         TabPane tabPane = new TabPane();
+        Tab dataTab = new Tab("Úlohy", dataTableView);
         Tab jobsTab = new Tab("Plánované úlohy", splitPane);
         jobsTab.setClosable(false);
         Tab resultTab = new Tab("Výsledky", resultsTabLayout);
         ChartBox chartBox = new ChartBox(displayedResults);
         Tab chartsTab = new Tab("Grafy", chartBox);
-        tabPane.getTabs().add(jobsTab);
+        tabPane.getTabs().addAll(dataTab, jobsTab);
 
         WeightsDialog weightsDialog = new WeightsDialog(weights -> {
             double profitWeight = weights[0];
@@ -87,7 +90,7 @@ public class Main extends Application {
         algorithmBar.setStyle("-fx-background-color: rgb(239,239,239); -fx-border-color: rgb(176, 176, 176); -fx-border-width: 0 0 1 0;");
         algorithmBar.getChildren().addAll( new Label(" Algoritmus:"), algorithmComboBox);
 
-        MenuBar menuBar = createMenuBar(stage, tabPane, jobsTab, resultTab, chartsTab, chartBox, weightsDialog);
+        MenuBar menuBar = createMenuBar(stage, tabPane, dataTab, jobsTab, resultTab, chartsTab, chartBox, weightsDialog);
 
         VBox topContainer = new VBox(menuBar, algorithmBar);
 
@@ -103,7 +106,7 @@ public class Main extends Application {
         stage.show();
     }
 
-    private MenuBar createMenuBar(Stage stage, TabPane tabPane, Tab jobsTab, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog) {
+    private MenuBar createMenuBar(Stage stage, TabPane tabPane, Tab dataTab, Tab jobsTab, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog) {
         MenuBar menuBar = new MenuBar();
         // File menu
         Menu fileMenu = new Menu("Súbor");
@@ -197,6 +200,10 @@ public class Main extends Application {
 
         // View menu
         Menu viewMenu = new Menu("Zobraziť");
+        MenuItem viewDataset = new MenuItem("Úlohy");
+        viewDataset.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT0, KeyCombination.SHORTCUT_DOWN));
+        viewDataset.setOnAction(e -> tabPane.getSelectionModel().select(dataTab));
+
         MenuItem viewJobs = new MenuItem("Plánované úlohy");
         viewJobs.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT1, KeyCombination.SHORTCUT_DOWN));
         viewJobs.setOnAction(e -> tabPane.getSelectionModel().select(jobsTab));
@@ -215,11 +222,31 @@ public class Main extends Application {
             tabPane.getSelectionModel().select(chartsTab);
         });
 
-        viewMenu.getItems().addAll(viewJobs, viewResults, viewCharts);
+        viewMenu.getItems().addAll(viewDataset, viewJobs, viewResults, viewCharts);
 
         menuBar.getMenus().addAll(fileMenu, runMenu, optionsMenu, viewMenu);
 
         return menuBar;
+    }
+
+    private void setDatasetTableView(){
+        dataTableView.getItems().clear();
+
+        TableColumn<Job, String> idCol = new TableColumn<>("ID úlohy");
+        idCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getID()));
+        idCol.setMinWidth(140);
+
+        TableColumn<Job, Integer> durationCol = new TableColumn<>("Trvanie");
+        durationCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDuration()).asObject());
+
+        TableColumn<Job, Integer> deadlineCol = new TableColumn<>("Deadline");
+        deadlineCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDeadline()).asObject());
+
+        TableColumn<Job, Integer> profitCol = new TableColumn<>("Zisk");
+        profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
+
+        dataTableView.getColumns().addAll(idCol, durationCol, deadlineCol, profitCol);
+        dataTableView.setItems(FXCollections.observableArrayList(jobs));
     }
 
     private void setTableView() {
