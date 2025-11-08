@@ -10,10 +10,12 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.Chart;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -27,6 +29,7 @@ import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
 import javafx.embed.swing.SwingFXUtils;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
@@ -50,6 +53,7 @@ public class Main extends Application {
     private StatsBox statsBox = new StatsBox();
     private ComparisonBox comparisonBox = new ComparisonBox();
     private Label statusLabel;
+    private boolean datasetModified = false;
     @Override
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
@@ -57,7 +61,6 @@ public class Main extends Application {
         jobs = loader.loadFromResource("/JobSampleData.csv");
         initialiseSchedulers();
 
-        setDatasetTableView();
         setTableView();
         setResultTableView();
 
@@ -69,7 +72,7 @@ public class Main extends Application {
         VBox.setVgrow(resultTableView, Priority.ALWAYS);
 
         TabPane tabPane = new TabPane();
-        Tab dataTab = new Tab("Úlohy", dataTableView);
+        Tab dataTab = new Tab("Úlohy", createDatasetTableViewLayout(stage));
         Tab jobsTab = new Tab("Plánované úlohy", splitPane);
         jobsTab.setClosable(false);
         Tab resultTab = new Tab("Výsledky", resultsTabLayout);
@@ -116,10 +119,10 @@ public class Main extends Application {
             ArrayList<Job> uploadedJobs = uploadJobFile(stage);
             if (!uploadedJobs.isEmpty()) {
                 jobs = uploadedJobs;
+                dataTableView.refresh();
                 initialiseSchedulers();
                 Toast.show(stage, "Úlohy boli úspešne nahrané!", Toast.ToastType.SUCCESS, 2000);
                 updateStatusLabel(null, false);
-
             } else {
                 Toast.show(stage, "Chyba pri nahrávaní úloh!", Toast.ToastType.ERROR, 2000);
             }
@@ -173,14 +176,14 @@ public class Main extends Application {
         MenuItem runItem = new MenuItem("Spustiť vybraný");
         runItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.SHORTCUT_DOWN));
         runItem.setOnAction(e -> {
-            runScheduler();
+            runScheduler(stage);
             tabPane.getSelectionModel().select(jobsTab);
         });
 
         MenuItem runAllItem = new MenuItem("Spustiť všetky");
         runAllItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
         runAllItem.setOnAction(e -> {
-            runAllSchedulers(tabPane, resultTab, chartsTab, chartBox, weightsDialog);
+            runAllSchedulers(stage, tabPane, resultTab, chartsTab, chartBox, weightsDialog);
             exportAllChartsItem.setDisable(false);
             profitChartItem.setDisable(false);
             executionTimeChartItem.setDisable(false);
@@ -229,24 +232,64 @@ public class Main extends Application {
         return menuBar;
     }
 
-    private void setDatasetTableView(){
+    private Node createDatasetTableViewLayout(Stage stage){
         dataTableView.getItems().clear();
+        dataTableView.setEditable(true);
 
         TableColumn<Job, String> idCol = new TableColumn<>("ID úlohy");
         idCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getID()));
+        idCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        idCol.setOnEditCommit(e -> {
+            Job job = e.getRowValue();
+            job.setID(e.getNewValue());
+            notifyDatasetChanged(stage);
+            dataTableView.refresh();
+        });
         idCol.setMinWidth(140);
 
         TableColumn<Job, Integer> durationCol = new TableColumn<>("Trvanie");
         durationCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDuration()).asObject());
+        durationCol.setCellFactory(TextFieldTableCell.forTableColumn(new ValidatedIntegerConverter(stage)));
+        durationCol.setOnEditCommit(e -> {
+            if (e.getNewValue() != null) {
+                Job job = e.getRowValue();
+                job.setDuration(e.getNewValue());
+                notifyDatasetChanged(stage);
+            }
+            dataTableView.refresh();
+        });
 
         TableColumn<Job, Integer> deadlineCol = new TableColumn<>("Deadline");
         deadlineCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDeadline()).asObject());
+        deadlineCol.setCellFactory(TextFieldTableCell.forTableColumn(new ValidatedIntegerConverter(stage)));
+        deadlineCol.setOnEditCommit(e -> {
+            if (e.getNewValue() != null) {
+                Job job = e.getRowValue();
+                job.setDeadline(e.getNewValue());
+                notifyDatasetChanged(stage);
+            }
+            dataTableView.refresh();
+        });
 
         TableColumn<Job, Integer> profitCol = new TableColumn<>("Zisk");
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
+        profitCol.setCellFactory(TextFieldTableCell.forTableColumn(new  ValidatedIntegerConverter(stage)));
+        profitCol.setOnEditCommit(e -> {
+            if (e.getNewValue() != null) {
+                Job job = e.getRowValue();
+                job.setProfit(e.getNewValue());
+                notifyDatasetChanged(stage);
+            }
+            dataTableView.refresh();
+        });
 
         dataTableView.getColumns().addAll(idCol, durationCol, deadlineCol, profitCol);
-        dataTableView.setItems(FXCollections.observableArrayList(jobs));
+        dataTableView.setItems(FXCollections.observableList(jobs));
+
+        VBox dataLayout = new VBox(10);
+        dataLayout.getChildren().addAll(dataTableView);
+
+        return dataLayout;
     }
 
     private void setTableView() {
@@ -273,8 +316,8 @@ public class Main extends Application {
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
 
         tableView.getColumns().addAll(idCol, durationCol, startTimeCol, endTimeCol, deadlineCol, profitCol);
-        tableView.setItems(displayedJobs);
         tableView.getSortOrder().add(startTimeCol);
+        tableView.setItems(displayedJobs);
     }
 
     private void setResultTableView() {
@@ -352,7 +395,12 @@ public class Main extends Application {
         setAlgorithmComboBox();
     }
 
-    private void runScheduler() {
+    private void runScheduler(Stage stage) {
+        if (datasetModified){
+            initialiseSchedulers();
+            datasetModified = false;
+            Toast.show(stage, "Plánovanie aktualizované.", Toast.ToastType.INFO, 2000);
+        }
         String selected = algorithmComboBox.getValue();
         GreedyScheduler scheduler = schedulers.get(selected);
         if  (scheduler != null) {
@@ -364,7 +412,13 @@ public class Main extends Application {
         }
     }
 
-    private void runAllSchedulers(TabPane tabPane, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog){
+    private void runAllSchedulers(Stage stage, TabPane tabPane, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog){
+        if (datasetModified){
+            initialiseSchedulers();
+            datasetModified = false;
+            Toast.show(stage, "Plánovanie aktualizované.", Toast.ToastType.INFO, 2000);
+        }
+
         getAllResults();
         chartBox.setResultObservableList(displayedResults);
 
@@ -564,6 +618,16 @@ public class Main extends Application {
             base += " | Posledné spustenie: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
         }
         statusLabel.setText(base);
+    }
+
+    private void markDatasetAsModified(){
+        datasetModified = true;
+    }
+
+    private void notifyDatasetChanged(Stage stage){
+        markDatasetAsModified();
+        Toast.show(stage, "Údaje datasetu boli zmenené. Spustite opäť plánovanie.", Toast.ToastType.WARNING, 3000);
+        statusLabel.setText("Nastala zmena údajov v datasete. Spustite znova plánovanie. Zmena nastala " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
     }
 
     public static void main(String[] args) {
