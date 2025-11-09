@@ -205,11 +205,17 @@ public class Main extends Application {
         Menu viewMenu = new Menu("Zobraziť");
         MenuItem viewDataset = new MenuItem("Úlohy");
         viewDataset.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT0, KeyCombination.SHORTCUT_DOWN));
-        viewDataset.setOnAction(e -> tabPane.getSelectionModel().select(dataTab));
+        viewDataset.setOnAction(e -> {
+            if (!tabPane.getTabs().contains(dataTab)) tabPane.getTabs().add(dataTab);
+            tabPane.getSelectionModel().select(dataTab);
+        });
 
         MenuItem viewJobs = new MenuItem("Plánované úlohy");
         viewJobs.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT1, KeyCombination.SHORTCUT_DOWN));
-        viewJobs.setOnAction(e -> tabPane.getSelectionModel().select(jobsTab));
+        viewJobs.setOnAction(e -> {
+            if (!tabPane.getTabs().contains(jobsTab)) tabPane.getTabs().add(jobsTab);
+            tabPane.getSelectionModel().select(jobsTab);
+        });
 
         MenuItem viewResults = new MenuItem("Výsledky");
         viewResults.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT2, KeyCombination.SHORTCUT_DOWN));
@@ -286,8 +292,36 @@ public class Main extends Application {
         dataTableView.getColumns().addAll(idCol, durationCol, deadlineCol, profitCol);
         dataTableView.setItems(FXCollections.observableList(jobs));
 
+        Button addBtn = new Button("Pridať úlohu");
+        addBtn.setOnAction(e -> {
+            AddJobDialog addJobDialog = new AddJobDialog();
+            addJobDialog.showAndWait();
+            Job addedJob = addJobDialog.getAddedJob();
+            if (addedJob != null) {
+                jobs.add(addedJob);
+                notifyDatasetChanged(stage);
+                dataTableView.refresh();
+            }
+        });
+
+        Button deletBtn = new Button("Vymazať úlohu");
+        deletBtn.setOnAction(e -> {
+            Job selectedJob =  dataTableView.getSelectionModel().getSelectedItem();
+            if (selectedJob != null) {
+                jobs.remove(selectedJob);
+                notifyDatasetChanged(stage);
+                dataTableView.refresh();
+            }
+        });
+
+        HBox dataButtonsControls = new HBox(10);
+        dataButtonsControls.setAlignment(Pos.CENTER);
+        dataButtonsControls.getChildren().addAll(addBtn, deletBtn);
+
         VBox dataLayout = new VBox(10);
-        dataLayout.getChildren().addAll(dataTableView);
+        dataLayout.getChildren().addAll(dataTableView,  dataButtonsControls);
+        dataLayout.setPadding(new Insets(15));
+        VBox.setVgrow(dataTableView, Priority.ALWAYS);
 
         return dataLayout;
     }
