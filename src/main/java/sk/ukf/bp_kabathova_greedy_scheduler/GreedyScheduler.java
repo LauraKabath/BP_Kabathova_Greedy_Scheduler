@@ -3,6 +3,9 @@ package sk.ukf.bp_kabathova_greedy_scheduler;
 import java.util.*;
 
 public abstract class GreedyScheduler {
+    protected static final int WORK_START_MIN = 0;
+    protected static final int WORK_END_MIN = 15 * 60;
+    protected static final int DAY_MINUTES = 24 * 60;
     protected ArrayList<Job> unscheduledJobs;
     protected ArrayList<ScheduledJob> scheduledJobs;
     protected SchedulerResult result;
@@ -38,6 +41,8 @@ public abstract class GreedyScheduler {
             int latestStart = deadline - duration;
 
             for (int start = latestStart; start >= 0; start--){
+                if (!fitsInWorkingHours(start, duration)) continue;
+
                 boolean fit = true;
 
                 for (int i = start; i < start + duration; i++){
@@ -59,6 +64,21 @@ public abstract class GreedyScheduler {
         }
 
         countTotalProfit();
+    }
+
+    protected boolean fitsInWorkingHours(int start, int duration) {
+        int end = start + duration;
+        int current = start;
+
+        while (current < end) {
+            int minuteInDay = current % DAY_MINUTES;
+            if (minuteInDay < WORK_START_MIN || minuteInDay >= WORK_END_MIN) {
+                return false;
+            }
+            current++;
+        }
+
+        return true;
     }
 
     protected int getTimeSlotsCount() {

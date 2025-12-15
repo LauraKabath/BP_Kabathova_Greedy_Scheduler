@@ -25,8 +25,8 @@ public class ValidatedIntegerConverter extends StringConverter<Integer> {
 
         try {
             int i = Integer.parseInt(s.trim());
-            if (i < 0) {
-                Toast.show(stage, "Zadajte celé číslo väčšie alebo rovné nule.", Toast.ToastType.WARNING, 2500);
+            if (i <= 0) {
+                Toast.show(stage, "Zadajte celé číslo väčšie ako nula.", Toast.ToastType.WARNING, 2500);
                 return null;
             }
             return i;

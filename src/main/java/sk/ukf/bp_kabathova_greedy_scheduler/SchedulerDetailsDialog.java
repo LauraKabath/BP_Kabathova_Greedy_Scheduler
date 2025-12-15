@@ -16,8 +16,10 @@ import java.util.ArrayList;
 public class SchedulerDetailsDialog {
     private Stage detailsStage;
     private TableView<ScheduledJob> jobsTableView;
+    private TimeConverter timeConverter;
 
     public SchedulerDetailsDialog(String schedulerName, ArrayList<ScheduledJob> scheduledJobs) {
+        timeConverter = new TimeConverter();
         setupTableView(scheduledJobs);
         initDetailsDialog(schedulerName);
     }
@@ -33,21 +35,24 @@ public class SchedulerDetailsDialog {
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
         profitCol.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<ScheduledJob, Integer> startTimeCol = new TableColumn<>("Začiatok");
-        startTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getStartTime()).asObject());
+        TableColumn<ScheduledJob, String> startTimeCol = new TableColumn<>("Začiatok");
+        startTimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(timeConverter.minutesToDateTimeString(cellData.getValue().getStartTime())));
         startTimeCol.setSortType(TableColumn.SortType.ASCENDING);
+        startTimeCol.setMinWidth(120);
         startTimeCol.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<ScheduledJob, Integer> endTimeCol = new TableColumn<>("Koniec");
-        endTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getEndTime()).asObject());
+        TableColumn<ScheduledJob, String> endTimeCol = new TableColumn<>("Koniec");
+        endTimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(timeConverter.minutesToDateTimeString(cellData.getValue().getEndTime())));
+        endTimeCol.setMinWidth(120);
         endTimeCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<ScheduledJob, Integer> durationCol = new TableColumn<>("Trvanie");
         durationCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDuration()).asObject());
         durationCol.setStyle("-fx-alignment: CENTER;");
 
-        TableColumn<ScheduledJob, Integer> deadlineCol = new TableColumn<>("Deadline");
-        deadlineCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDeadline()).asObject());
+        TableColumn<ScheduledJob, String> deadlineCol = new TableColumn<>("Deadline");
+        deadlineCol.setCellValueFactory(cellData -> new SimpleStringProperty(timeConverter.minutesToDateTimeString(cellData.getValue().getDeadline())));
+        deadlineCol.setMinWidth(120);
         deadlineCol.setStyle("-fx-alignment: CENTER;");
 
 

@@ -12,12 +12,14 @@ public class AddJobDialog extends Dialog<Job> {
     private Job addedJob;
     private TextField jobName;
     private TextField jobDuration;
-    private TextField jobDeadline;
+    private DateTimePicker jobDeadlinePicker;
+    private TimeConverter timeConverter;
     private TextField jobProfit;
     private Stage stage;
 
     public AddJobDialog() {
         super();
+        timeConverter = new TimeConverter();
         this.setTitle("Pridajte úlohu");
         addedJob = null;
         this.stage = (Stage) this.getDialogPane().getScene().getWindow();
@@ -32,11 +34,11 @@ public class AddJobDialog extends Dialog<Job> {
         Button okButton = (Button) getDialogPane().lookupButton(ButtonType.OK);
         Button cancelButton = (Button) getDialogPane().lookupButton(ButtonType.CANCEL);
         okButton.addEventFilter(ActionEvent.ACTION, e -> {
-           if (!validateDialog()){
-               e.consume();
-           } else {
-               addedJob = new Job(jobName.getText(), Integer.parseInt(jobDuration.getText()), Integer.parseInt(jobDeadline.getText()), Integer.parseInt(jobProfit.getText()));
-           }
+            if (!validateDialog()) {
+                e.consume();
+            } else {
+                addedJob = new Job(jobName.getText(), Integer.parseInt(jobDuration.getText()), jobDeadlinePicker.getMinutes(), Integer.parseInt(jobProfit.getText()));
+            }
         });
         cancelButton.addEventFilter(ActionEvent.ACTION, e -> this.close());
     }
@@ -46,23 +48,23 @@ public class AddJobDialog extends Dialog<Job> {
     }
 
     private boolean validateDialog() {
-        if ((jobName.getText().isEmpty()) || (jobDuration.getText().isEmpty()) || (jobDeadline.getText().isEmpty()) || (jobProfit.getText().isEmpty())) {
+        if ((jobName.getText().isEmpty()) || (jobDuration.getText().isEmpty()) || (jobProfit.getText().isEmpty())) {
             Toast.show(stage, "Vyplňte všetky polia!", Toast.ToastType.WARNING, 2500);
             return false;
         }
 
-        if (!isIntegerValid(jobDuration.getText()) || !isIntegerValid(jobDeadline.getText()) || !isIntegerValid(jobProfit.getText())) {
+        if (!isIntegerValid(jobDuration.getText()) || !isIntegerValid(jobProfit.getText())) {
             Toast.show(stage, "Zadajte platné celé čísla väčšie alebo rovné nule.", Toast.ToastType.WARNING, 2500);
             return false;
         }
         return true;
     }
 
-    private boolean isIntegerValid(String value){
+    private boolean isIntegerValid(String value) {
         return value.matches("\\d+") && Integer.parseInt(value) >= 0;
     }
 
-    private Pane createGridPane(){
+    private Pane createGridPane() {
         GridPane gridPane = new GridPane();
         gridPane.setHgap(10);
         gridPane.setVgap(8);
@@ -82,10 +84,7 @@ public class AddJobDialog extends Dialog<Job> {
         jobDuration.setFocusTraversable(false);
         attachListener(jobDuration);
 
-        jobDeadline = new TextField();
-        jobDeadline.setPromptText("Zadajte deadline úlohy");
-        jobDeadline.setFocusTraversable(false);
-        attachListener(jobDeadline);
+        jobDeadlinePicker = new DateTimePicker();
 
         jobProfit = new TextField();
         jobProfit.setPromptText("Zadajte zisk/prioritu úlohy");
@@ -101,8 +100,8 @@ public class AddJobDialog extends Dialog<Job> {
         GridPane.setHgrow(jobDuration, Priority.ALWAYS);
 
         gridPane.add(deadlineLabel, 0, 2);
-        gridPane.add(jobDeadline, 1, 2);
-        GridPane.setHgrow(jobDeadline, Priority.ALWAYS);
+        gridPane.add(jobDeadlinePicker, 1, 2);
+        GridPane.setHgrow(jobDeadlinePicker, Priority.ALWAYS);
 
         gridPane.add(profitLabel, 0, 3);
         gridPane.add(jobProfit, 1, 3);

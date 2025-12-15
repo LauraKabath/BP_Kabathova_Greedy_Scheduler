@@ -46,6 +46,7 @@ public class Main extends Application {
     private DataLoader loader = new DataLoader();
     private FileChooser fileChooser = new FileChooser();
     private ArrayList<Job> jobs;
+    private TimeConverter timeConverter = new TimeConverter();
     private ComboBox<String> algorithmComboBox = new ComboBox<>();
     private TableView<SchedulerResult> resultTableView = new TableView<>();
     private ObservableList<SchedulerResult> displayedResults =  FXCollections.observableArrayList();
@@ -58,7 +59,7 @@ public class Main extends Application {
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
 
-        jobs = loader.loadFromResource("/JobSampleData.csv");
+        jobs = loader.loadFromResource("/JobSampleData100.csv");
         initialiseSchedulers();
 
         setTableView();
@@ -265,17 +266,68 @@ public class Main extends Application {
             dataTableView.refresh();
         });
 
-        TableColumn<Job, Integer> deadlineCol = new TableColumn<>("Deadline");
-        deadlineCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDeadline()).asObject());
-        deadlineCol.setCellFactory(TextFieldTableCell.forTableColumn(new ValidatedIntegerConverter(stage)));
-        deadlineCol.setOnEditCommit(e -> {
-            if (e.getNewValue() != null) {
-                Job job = e.getRowValue();
-                job.setDeadline(e.getNewValue());
-                notifyDatasetChanged(stage);
-            }
-            dataTableView.refresh();
-        });
+        TableColumn<Job, String> deadlineCol = new TableColumn<>("Deadline");
+        deadlineCol.setMinWidth(210);
+        deadlineCol.setCellValueFactory(cellData -> new SimpleStringProperty(timeConverter.minutesToDateTimeString(cellData.getValue().getDeadline())));
+        deadlineCol.setCellFactory(col -> new TableCell<>() {
+
+                    private DateTimePicker picker;
+
+                    @Override
+                    public void startEdit() {
+                        super.startEdit();
+
+                        Job job = getTableView().getItems().get(getIndex());
+
+                        picker = new DateTimePicker(timeConverter.minutesToDateTimeString(job.getDeadline()));
+
+                        picker.setOnKeyPressed(e -> {
+                            switch (e.getCode()) {
+                                case ENTER -> commitEdit(picker.getDateTimeString());
+                                case ESCAPE -> cancelEdit();
+                            }
+                        });
+
+                        picker.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                            if (!isFocused) {
+                                commitEdit(picker.getDateTimeString());
+                            }
+                        });
+
+                        setGraphic(picker);
+                        setText(null);
+                    }
+
+                    @Override
+                    public void cancelEdit() {
+                        super.cancelEdit();
+                        updateItem(getItem(), false);
+                    }
+
+                    @Override
+                    public void commitEdit(String value) {
+                        Job job = getTableView().getItems().get(getIndex());
+
+                        job.setDeadline(picker.getMinutes());
+
+                        notifyDatasetChanged(stage);
+
+                        super.commitEdit(value);
+                        dataTableView.refresh();
+                    }
+
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+
+                        if (empty || !isEditing()) {
+                            setText(item);
+                            setGraphic(null);
+                        }
+                    }
+                }
+
+        );
 
         TableColumn<Job, Integer> profitCol = new TableColumn<>("Zisk");
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
@@ -304,8 +356,8 @@ public class Main extends Application {
             }
         });
 
-        Button deletBtn = new Button("Vymazať úlohu");
-        deletBtn.setOnAction(e -> {
+        Button deleteBtn = new Button("Vymazať úlohu");
+        deleteBtn.setOnAction(e -> {
             Job selectedJob =  dataTableView.getSelectionModel().getSelectedItem();
             if (selectedJob != null) {
                 jobs.remove(selectedJob);
@@ -316,7 +368,7 @@ public class Main extends Application {
 
         HBox dataButtonsControls = new HBox(10);
         dataButtonsControls.setAlignment(Pos.CENTER);
-        dataButtonsControls.getChildren().addAll(addBtn, deletBtn);
+        dataButtonsControls.getChildren().addAll(addBtn, deleteBtn);
 
         VBox dataLayout = new VBox(10);
         dataLayout.getChildren().addAll(dataTableView,  dataButtonsControls);
@@ -336,15 +388,18 @@ public class Main extends Application {
         TableColumn<ScheduledJob, Integer> durationCol = new TableColumn<>("Trvanie");
         durationCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDuration()).asObject());
 
-        TableColumn<ScheduledJob, Integer> startTimeCol = new TableColumn<>("Začiatok");
-        startTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getStartTime()).asObject());
+        TableColumn<ScheduledJob, String> startTimeCol = new TableColumn<>("Začiatok");
+        startTimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(timeConverter.minutesToDateTimeString(cellData.getValue().getStartTime())));
+        startTimeCol.setMinWidth(120);
         startTimeCol.setSortType(TableColumn.SortType.ASCENDING);
 
-        TableColumn<ScheduledJob, Integer> endTimeCol = new TableColumn<>("Koniec");
-        endTimeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getEndTime()).asObject());
+        TableColumn<ScheduledJob, String> endTimeCol = new TableColumn<>("Koniec");
+        endTimeCol.setMinWidth(120);
+        endTimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(timeConverter.minutesToDateTimeString(cellData.getValue().getEndTime())));
 
-        TableColumn<ScheduledJob, Integer> deadlineCol = new TableColumn<>("Deadline");
-        deadlineCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getDeadline()).asObject());
+        TableColumn<ScheduledJob, String> deadlineCol = new TableColumn<>("Deadline");
+        deadlineCol.setMinWidth(120);
+        deadlineCol.setCellValueFactory(cellData -> new SimpleStringProperty(timeConverter.minutesToDateTimeString(cellData.getValue().getDeadline())));
 
         TableColumn<ScheduledJob, Integer> profitCol = new TableColumn<>("Zisk");
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
