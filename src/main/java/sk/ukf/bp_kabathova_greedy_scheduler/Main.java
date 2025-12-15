@@ -360,9 +360,17 @@ public class Main extends Application {
         deleteBtn.setOnAction(e -> {
             Job selectedJob =  dataTableView.getSelectionModel().getSelectedItem();
             if (selectedJob != null) {
-                jobs.remove(selectedJob);
-                notifyDatasetChanged(stage);
-                dataTableView.refresh();
+                Alert deleteConfirmation = new Alert(Alert.AlertType.CONFIRMATION);
+                deleteConfirmation.setTitle("Vymazanie");
+                deleteConfirmation.setHeaderText("Vymazanie úlohy");
+                deleteConfirmation.setContentText("Naozaj si prajete vymazať označenú úlohu?");
+                deleteConfirmation.showAndWait().ifPresent(event -> {
+                    if (event == ButtonType.OK) {
+                        jobs.remove(selectedJob);
+                        notifyDatasetChanged(stage);
+                        dataTableView.refresh();
+                    }
+                });
             }
         });
 
