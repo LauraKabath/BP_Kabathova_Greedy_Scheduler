@@ -55,6 +55,7 @@ public class Main extends Application {
     private ComparisonBox comparisonBox = new ComparisonBox();
     private Label statusLabel;
     private boolean datasetModified = false;
+    Tab scheduleDiagramTab = new Tab("Rozvrh");
     @Override
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
@@ -76,10 +77,11 @@ public class Main extends Application {
         Tab dataTab = new Tab("Úlohy", createDatasetTableViewLayout(stage));
         Tab jobsTab = new Tab("Plánované úlohy", splitPane);
         jobsTab.setClosable(false);
+        scheduleDiagramTab.setClosable(false);
         Tab resultTab = new Tab("Výsledky", resultsTabLayout);
         ChartBox chartBox = new ChartBox(displayedResults);
         Tab chartsTab = new Tab("Grafy", chartBox);
-        tabPane.getTabs().addAll(dataTab, jobsTab);
+        tabPane.getTabs().addAll(dataTab, jobsTab, scheduleDiagramTab);
 
         WeightsDialog weightsDialog = new WeightsDialog(weights -> {
             double profitWeight = weights[0];
@@ -502,6 +504,7 @@ public class Main extends Application {
         GreedyScheduler scheduler = schedulers.get(selected);
         if  (scheduler != null) {
             getAlgorithmResult(scheduler);
+            scheduleDiagramTab.setContent(new ScheduleView(scheduler.getScheduledJobs(), timeConverter));
             tableView.sort();
             updateStatusLabel(selected, true);
         } else {
@@ -560,6 +563,7 @@ public class Main extends Application {
         GreedyScheduler scheduler = schedulers.get(name);
         if (scheduler != null) {
             getAlgorithmResult(scheduler);
+            scheduleDiagramTab.setContent(new ScheduleView(scheduler.getScheduledJobs(), timeConverter));
         } else {
             System.out.println("Plánovač sa nenašiel " + name);
         }
