@@ -24,6 +24,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.transform.Transform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -133,11 +134,16 @@ public class Main extends Application {
 
         MenuItem exportResultItem = new MenuItem("Exportovať výsledky do CSV");
         exportResultItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN));
-        exportResultItem.setOnAction(e -> exportTableViewToCSV(stage, resultTableView, "výsledky.csv"));
+        exportResultItem.setOnAction(e -> exportTableViewToCSV(stage, resultTableView, "vysledky.csv"));
 
         MenuItem exportJobsItem = new MenuItem("Exportovať úlohy do CSV");
         exportJobsItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.SHORTCUT_DOWN));
-        exportJobsItem.setOnAction(e -> exportTableViewToCSV(stage, tableView, "úlohy.csv"));
+        exportJobsItem.setOnAction(e -> exportTableViewToCSV(stage, tableView,  "ulohy_" + statsBox.getAlgorithmNameLabel().getText() + ".csv"));
+
+        MenuItem exportScheduleDiagramItem = new MenuItem("Exportovať rozvrh do PNG");
+        exportScheduleDiagramItem.setAccelerator(new KeyCodeCombination(KeyCode.D, KeyCombination.SHORTCUT_DOWN));
+        exportScheduleDiagramItem.setOnAction(e -> exportScheduleDiagramToPNG(stage,((ScheduleView) scheduleDiagramTab.getContent()).getScrollPaneSchedule()));
+        exportScheduleDiagramItem.setDisable(true);
 
         MenuItem exportAllChartsItem = new MenuItem("Exportovať všetky grafy do PNG");
         exportAllChartsItem.setAccelerator(new KeyCodeCombination(KeyCode.A, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
@@ -172,7 +178,7 @@ public class Main extends Application {
         exitItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.SHORTCUT_DOWN));
         exitItem.setOnAction(e -> Platform.exit());
 
-        fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exportJobsItem, exportResultItem, exportAllChartsItem, chartsMenu, new SeparatorMenuItem(), exitItem);
+        fileMenu.getItems().addAll(uploadItem, new SeparatorMenuItem(), exportJobsItem, exportScheduleDiagramItem, exportResultItem, exportAllChartsItem, chartsMenu, new SeparatorMenuItem(), exitItem);
 
         // Run menu
         Menu runMenu = new Menu("Spustiť");
@@ -181,12 +187,14 @@ public class Main extends Application {
         runItem.setOnAction(e -> {
             runScheduler(stage);
             tabPane.getSelectionModel().select(jobsTab);
+            exportScheduleDiagramItem.setDisable(false);
         });
 
         MenuItem runAllItem = new MenuItem("Spustiť všetky");
         runAllItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
         runAllItem.setOnAction(e -> {
             runAllSchedulers(stage, tabPane, resultTab, chartsTab, chartBox, weightsDialog);
+            exportScheduleDiagramItem.setDisable(false);
             exportAllChartsItem.setDisable(false);
             profitChartItem.setDisable(false);
             executionTimeChartItem.setDisable(false);
@@ -220,21 +228,28 @@ public class Main extends Application {
             tabPane.getSelectionModel().select(jobsTab);
         });
 
+        MenuItem viewScheduleDiagram = new MenuItem("Rozvrh");
+        viewScheduleDiagram.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT2, KeyCombination.SHORTCUT_DOWN));
+        viewScheduleDiagram.setOnAction(e -> {
+            if (!tabPane.getTabs().contains(scheduleDiagramTab)) tabPane.getTabs().add(scheduleDiagramTab);
+            tabPane.getSelectionModel().select(scheduleDiagramTab);
+        });
+
         MenuItem viewResults = new MenuItem("Výsledky");
-        viewResults.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT2, KeyCombination.SHORTCUT_DOWN));
+        viewResults.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT3, KeyCombination.SHORTCUT_DOWN));
         viewResults.setOnAction(e -> {
             if (!tabPane.getTabs().contains(resultTab)) tabPane.getTabs().add(resultTab);
             tabPane.getSelectionModel().select(resultTab);
         });
 
         MenuItem viewCharts = new MenuItem("Grafy");
-        viewCharts.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT3, KeyCombination.SHORTCUT_DOWN));
+        viewCharts.setAccelerator(new KeyCodeCombination(KeyCode.DIGIT4, KeyCombination.SHORTCUT_DOWN));
         viewCharts.setOnAction(e -> {
             if (!tabPane.getTabs().contains(chartsTab)) tabPane.getTabs().add(chartsTab);
             tabPane.getSelectionModel().select(chartsTab);
         });
 
-        viewMenu.getItems().addAll(viewDataset, viewJobs, viewResults, viewCharts);
+        viewMenu.getItems().addAll(viewDataset, viewJobs, viewScheduleDiagram, viewResults, viewCharts);
 
         menuBar.getMenus().addAll(fileMenu, runMenu, optionsMenu, viewMenu);
 
@@ -659,6 +674,32 @@ public class Main extends Application {
             return "\"" + s + "\"";
         }
         return s;
+    }
+
+    private void exportScheduleDiagramToPNG(Stage stage, ScrollPane schedule){
+        fileChooser.setTitle("Uložiť rozvrh ako PNG");
+        fileChooser.getExtensionFilters().clear();
+        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("PNG obrázky", "*.png"));
+        fileChooser.setInitialFileName("rozvrh_" + statsBox.getAlgorithmNameLabel().getText() + ".png");
+
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) return;
+
+        try {
+            Node content = schedule.getContent();
+
+            SnapshotParameters params = new SnapshotParameters();
+            params.setTransform(Transform.scale(1, 1));
+
+            WritableImage image = new WritableImage((int) content.getBoundsInParent().getWidth(),(int) content.getBoundsInParent().getHeight());
+            content.snapshot(params, image);
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+
+            Toast.show(stage, "Rozvrh bol úspešne exportovaný!", Toast.ToastType.SUCCESS, 2500);
+        } catch (Exception e){
+            Toast.show(stage, "Chyba pri exportovaní rozvrhu!", Toast.ToastType.ERROR, 2500);
+            System.out.println(e.getMessage());
+        }
     }
 
     private void exportSingleChart(Stage stage, Chart chart, String initialFilename){

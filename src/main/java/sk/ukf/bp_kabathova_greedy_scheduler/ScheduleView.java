@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class ScheduleView extends BorderPane {
+    private ScrollPane scrollPaneSchedule;
     public ScheduleView(ArrayList<ScheduledJob> scheduledJobs, TimeConverter timeConverter) {
         HBox daysBox = new HBox();
         daysBox.setSpacing(5);
@@ -39,6 +40,11 @@ public class ScheduleView extends BorderPane {
             column.sortJobsByStartTime();
         }
 
-        setCenter(new ScrollPane(new HBox(new TimeAxis(), daysBox)));
+        scrollPaneSchedule = new ScrollPane(new HBox(new TimeAxis(), daysBox));
+        setCenter(scrollPaneSchedule);
+    }
+
+    public ScrollPane getScrollPaneSchedule() {
+        return scrollPaneSchedule;
     }
 }
