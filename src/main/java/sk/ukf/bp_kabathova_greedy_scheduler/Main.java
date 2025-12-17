@@ -122,7 +122,7 @@ public class Main extends Application {
                 Toast.show(stage, "Úlohy boli úspešne nahrané!", Toast.ToastType.SUCCESS, 2000);
                 updateStatusLabel(null, false);
             } else {
-                Toast.show(stage, "Chyba pri nahrávaní úloh!", Toast.ToastType.ERROR, 2000);
+                Toast.show(stage, "Chyba pri nahrávaní úloh: " + loader.getErrorMessage(), Toast.ToastType.ERROR, 2000);
             }
         });
 

@@ -1,21 +1,25 @@
 package sk.ukf.bp_kabathova_greedy_scheduler;
 
 import java.io.*;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 
 public class DataLoader {
     private ArrayList<Job> jobs;
     private String fileName;
     private TimeConverter timeConverter;
+    private String errorMessage;
 
     public DataLoader(String fileName) {
         this.fileName = fileName;
         timeConverter = new TimeConverter();
+        errorMessage = "";
     }
 
     public DataLoader() {
         jobs = new ArrayList<>();
         timeConverter = new TimeConverter();
+        errorMessage = "";
     }
 
 
@@ -46,27 +50,39 @@ public class DataLoader {
 
     private void loadJobs(Reader reader){
         jobs.clear();
+        errorMessage = "";
         BufferedReader br = null;
         try {
             br = new BufferedReader(reader);
             String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] data = line.split("[;,]");
-                if (data.length < 4) continue;
+                if (data.length < 4) throw new IllegalArgumentException("Nesprávny počet stĺpcov v datasete.");
                 String jobID = data[0].trim();
+                if (jobID.isEmpty()) throw new IllegalArgumentException("ID úlohy nemôže byť prázdne.");
                 int duration = Integer.parseInt(data[1].trim());
+                if (duration <= 0)
+                    throw new IllegalArgumentException("Neplatné trvanie úlohy. Trvanie musí byť kladné číslo.");
                 int deadline = timeConverter.deadlineToMinutes(data[2].trim());
+                if (deadline < 0) throw new IllegalArgumentException("Neplatný deadline úlohy.");
                 int profit = Integer.parseInt(data[3].trim());
+                if (profit < 0)
+                    throw new IllegalArgumentException("Neplatný profit úlohy. Profit musí byť kladné číslo.");
                 Job job = new Job(jobID, duration, deadline, profit);
                 jobs.add(job);
             }
+        } catch (NumberFormatException numberError){
+            jobs.clear();
+            errorMessage = "Niektorá číselná hodnota nie je celé číslo. Skontrolujte trvanie a profit.";
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            jobs.clear();
+            errorMessage = e.getMessage();
         } finally{
             try {
                 if (br != null) br.close();
             } catch (IOException ioException){
-                System.out.println(ioException.getMessage());
+                jobs.clear();
+                errorMessage = ioException.getMessage();
             }
         }
     }
@@ -77,5 +93,9 @@ public class DataLoader {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 }

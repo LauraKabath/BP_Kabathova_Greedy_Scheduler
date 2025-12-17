@@ -1,5 +1,6 @@
 package sk.ukf.bp_kabathova_greedy_scheduler;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,10 +38,14 @@ public class TimeConverter {
     }
 
     public int deadlineToMinutes(String deadlineString){
-        LocalDateTime deadline = LocalDateTime.parse(deadlineString, FORMAT);
-        long minutes = Duration.between(baseTime, deadline).toMinutes();
-        if (minutes < 0) return 0;
-        return (int) minutes;
+        try {
+            LocalDateTime deadline = LocalDateTime.parse(deadlineString, FORMAT);
+            long minutes = Duration.between(baseTime, deadline).toMinutes();
+            if (minutes < 0) return 0;
+            return (int) minutes;
+        } catch (DateTimeException e){
+            throw new IllegalArgumentException("Deadline má neplatný formát dátumu alebo času.");
+        }
     }
 
     public String minutesToDateTimeString(int minutes){
