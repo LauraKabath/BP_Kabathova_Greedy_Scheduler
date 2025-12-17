@@ -12,11 +12,8 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
-import javafx.scene.chart.Chart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -24,15 +21,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.transform.Transform;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import javax.imageio.ImageIO;
-import javafx.embed.swing.SwingFXUtils;
-
 import java.io.File;
-import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,22 +33,24 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 public class Main extends Application {
-    private TableView<Job> dataTableView =  new TableView<>();
+    private TableView<Job> dataTableView = new TableView<>();
     private TableView<ScheduledJob> tableView = new TableView<>();
-    private ObservableList<ScheduledJob> displayedJobs =  FXCollections.observableArrayList();
+    private ObservableList<ScheduledJob> displayedJobs = FXCollections.observableArrayList();
     private DataLoader loader = new DataLoader();
     private FileChooser fileChooser = new FileChooser();
+    private ExportManager exportManager = new ExportManager();
     private ArrayList<Job> jobs;
     private TimeConverter timeConverter = new TimeConverter();
     private ComboBox<String> algorithmComboBox = new ComboBox<>();
     private TableView<SchedulerResult> resultTableView = new TableView<>();
-    private ObservableList<SchedulerResult> displayedResults =  FXCollections.observableArrayList();
+    private ObservableList<SchedulerResult> displayedResults = FXCollections.observableArrayList();
     private HashMap<String, GreedyScheduler> schedulers = new HashMap<>();
     private StatsBox statsBox = new StatsBox();
     private ComparisonBox comparisonBox = new ComparisonBox();
     private Label statusLabel;
     private boolean datasetModified = false;
     Tab scheduleDiagramTab = new Tab("Rozvrh");
+
     @Override
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
@@ -95,7 +89,7 @@ public class Main extends Application {
         algorithmBar.setPadding(new Insets(5));
         algorithmBar.setAlignment(Pos.CENTER_LEFT);
         algorithmBar.setStyle("-fx-background-color: rgb(239,239,239); -fx-border-color: rgb(176, 176, 176); -fx-border-width: 0 0 1 0;");
-        algorithmBar.getChildren().addAll( new Label(" Algoritmus:"), algorithmComboBox);
+        algorithmBar.getChildren().addAll(new Label(" Algoritmus:"), algorithmComboBox);
 
         MenuBar menuBar = createMenuBar(stage, tabPane, dataTab, jobsTab, resultTab, chartsTab, chartBox, weightsDialog);
 
@@ -134,42 +128,42 @@ public class Main extends Application {
 
         MenuItem exportResultItem = new MenuItem("Exportovať výsledky do CSV");
         exportResultItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN));
-        exportResultItem.setOnAction(e -> exportTableViewToCSV(stage, resultTableView, "vysledky.csv"));
+        exportResultItem.setOnAction(e -> exportManager.exportTableViewToCSV(stage, resultTableView, "vysledky.csv"));
 
         MenuItem exportJobsItem = new MenuItem("Exportovať úlohy do CSV");
         exportJobsItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.SHORTCUT_DOWN));
-        exportJobsItem.setOnAction(e -> exportTableViewToCSV(stage, tableView,  "ulohy_" + statsBox.getAlgorithmNameLabel().getText() + ".csv"));
+        exportJobsItem.setOnAction(e -> exportManager.exportTableViewToCSV(stage, tableView, "ulohy_" + statsBox.getAlgorithmNameLabel().getText() + ".csv"));
 
         MenuItem exportScheduleDiagramItem = new MenuItem("Exportovať rozvrh do PNG");
         exportScheduleDiagramItem.setAccelerator(new KeyCodeCombination(KeyCode.D, KeyCombination.SHORTCUT_DOWN));
-        exportScheduleDiagramItem.setOnAction(e -> exportScheduleDiagramToPNG(stage,((ScheduleView) scheduleDiagramTab.getContent()).getScrollPaneSchedule()));
+        exportScheduleDiagramItem.setOnAction(e -> exportManager.exportScheduleDiagramToPNG(stage, ((ScheduleView) scheduleDiagramTab.getContent()).getScrollPaneSchedule(), statsBox.getAlgorithmNameLabel().getText()));
         exportScheduleDiagramItem.setDisable(true);
 
         MenuItem exportAllChartsItem = new MenuItem("Exportovať všetky grafy do PNG");
         exportAllChartsItem.setAccelerator(new KeyCodeCombination(KeyCode.A, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
-        exportAllChartsItem.setOnAction(e -> exportAllCharts(stage, chartBox));
+        exportAllChartsItem.setOnAction(e -> exportManager.exportAllCharts(stage, chartBox));
         exportAllChartsItem.setDisable(true);
 
         // Charts menu
         Menu chartsMenu = new Menu("Exportovať grafy do PNG");
         MenuItem profitChartItem = new MenuItem("Graf zisku");
         profitChartItem.setAccelerator(new KeyCodeCombination(KeyCode.P, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
-        profitChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getProfitBarChart(), "graf_zisk.png"));
+        profitChartItem.setOnAction(e -> exportManager.exportSingleChart(stage, chartBox.getProfitBarChart(), "graf_zisk.png"));
         profitChartItem.setDisable(true);
 
         MenuItem executionTimeChartItem = new MenuItem("Graf času vykonania");
         executionTimeChartItem.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
-        executionTimeChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getExecutionTimeBarChart(), "graf_cas_vykonania.png"));
+        executionTimeChartItem.setOnAction(e -> exportManager.exportSingleChart(stage, chartBox.getExecutionTimeBarChart(), "graf_cas_vykonania.png"));
         executionTimeChartItem.setDisable(true);
 
         MenuItem jobsChartItem = new MenuItem("Graf úloh");
         jobsChartItem.setAccelerator(new KeyCodeCombination(KeyCode.J, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
-        jobsChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getJobsBarChart(), "graf_ulohy.png"));
+        jobsChartItem.setOnAction(e -> exportManager.exportSingleChart(stage, chartBox.getJobsBarChart(), "graf_ulohy.png"));
         jobsChartItem.setDisable(true);
 
         MenuItem totalTimeChartItem = new MenuItem("Graf celkového času");
         totalTimeChartItem.setAccelerator(new KeyCodeCombination(KeyCode.T, KeyCombination.SHIFT_DOWN, KeyCombination.SHORTCUT_DOWN));
-        totalTimeChartItem.setOnAction(e -> exportSingleChart(stage, chartBox.getTotalTimeBarChart(), "graf_celkovy_cas.png"));
+        totalTimeChartItem.setOnAction(e -> exportManager.exportSingleChart(stage, chartBox.getTotalTimeBarChart(), "graf_celkovy_cas.png"));
         totalTimeChartItem.setDisable(true);
 
         chartsMenu.getItems().addAll(profitChartItem, executionTimeChartItem, jobsChartItem, totalTimeChartItem);
@@ -256,7 +250,7 @@ public class Main extends Application {
         return menuBar;
     }
 
-    private Node createDatasetTableViewLayout(Stage stage){
+    private Node createDatasetTableViewLayout(Stage stage) {
         dataTableView.getItems().clear();
         dataTableView.setEditable(true);
 
@@ -348,7 +342,7 @@ public class Main extends Application {
 
         TableColumn<Job, Integer> profitCol = new TableColumn<>("Zisk");
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getProfit()).asObject());
-        profitCol.setCellFactory(TextFieldTableCell.forTableColumn(new  ValidatedIntegerConverter(stage)));
+        profitCol.setCellFactory(TextFieldTableCell.forTableColumn(new ValidatedIntegerConverter(stage)));
         profitCol.setOnEditCommit(e -> {
             if (e.getNewValue() != null) {
                 Job job = e.getRowValue();
@@ -375,7 +369,7 @@ public class Main extends Application {
 
         Button deleteBtn = new Button("Vymazať úlohu");
         deleteBtn.setOnAction(e -> {
-            Job selectedJob =  dataTableView.getSelectionModel().getSelectedItem();
+            Job selectedJob = dataTableView.getSelectionModel().getSelectedItem();
             if (selectedJob != null) {
                 Alert deleteConfirmation = new Alert(Alert.AlertType.CONFIRMATION);
                 deleteConfirmation.setTitle("Vymazanie");
@@ -396,7 +390,7 @@ public class Main extends Application {
         dataButtonsControls.getChildren().addAll(addBtn, deleteBtn);
 
         VBox dataLayout = new VBox(10);
-        dataLayout.getChildren().addAll(dataTableView,  dataButtonsControls);
+        dataLayout.getChildren().addAll(dataTableView, dataButtonsControls);
         dataLayout.setPadding(new Insets(15));
         VBox.setVgrow(dataTableView, Priority.ALWAYS);
 
@@ -452,10 +446,10 @@ public class Main extends Application {
         TableColumn<SchedulerResult, Integer> timeCol = new TableColumn<>("Celkový čas");
         timeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalTimeUsed()).asObject());
 
-        TableColumn<SchedulerResult,Double> executionTimeCol = new TableColumn<>("Čas vykonania");
+        TableColumn<SchedulerResult, Double> executionTimeCol = new TableColumn<>("Čas vykonania");
         executionTimeCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getExecutionTimeMillis()).asObject());
 
-        TableColumn<SchedulerResult,Double> scoreCol = new TableColumn<>("Skóre");
+        TableColumn<SchedulerResult, Double> scoreCol = new TableColumn<>("Skóre");
         scoreCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getScore()).asObject());
 
         resultTableView.getColumns().addAll(nameCol, scheduledJobsCountCol, jobsCountCol, profitCol, timeCol, executionTimeCol, scoreCol);
@@ -494,7 +488,7 @@ public class Main extends Application {
 
     private void setAlgorithmComboBox() {
         algorithmComboBox.getItems().clear();
-        algorithmComboBox.getItems().addAll( schedulers.keySet());
+        algorithmComboBox.getItems().addAll(schedulers.keySet());
         algorithmComboBox.getSelectionModel().selectFirst();
     }
 
@@ -510,25 +504,25 @@ public class Main extends Application {
     }
 
     private void runScheduler(Stage stage) {
-        if (datasetModified){
+        if (datasetModified) {
             initialiseSchedulers();
             datasetModified = false;
             Toast.show(stage, "Plánovanie aktualizované.", Toast.ToastType.INFO, 2000);
         }
         String selected = algorithmComboBox.getValue();
         GreedyScheduler scheduler = schedulers.get(selected);
-        if  (scheduler != null) {
+        if (scheduler != null) {
             getAlgorithmResult(scheduler);
             scheduleDiagramTab.setContent(new ScheduleView(scheduler.getScheduledJobs(), timeConverter));
             tableView.sort();
             updateStatusLabel(selected, true);
         } else {
-            System.out.println("Plánovač sa nenašiel " +  selected);
+            System.out.println("Plánovač sa nenašiel " + selected);
         }
     }
 
-    private void runAllSchedulers(Stage stage, TabPane tabPane, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog){
-        if (datasetModified){
+    private void runAllSchedulers(Stage stage, TabPane tabPane, Tab resultTab, Tab chartsTab, ChartBox chartBox, WeightsDialog weightsDialog) {
+        if (datasetModified) {
             initialiseSchedulers();
             datasetModified = false;
             Toast.show(stage, "Plánovanie aktualizované.", Toast.ToastType.INFO, 2000);
@@ -584,9 +578,9 @@ public class Main extends Application {
         }
     }
 
-    private void getAllResults(){
+    private void getAllResults() {
         displayedResults.clear();
-        for  (GreedyScheduler scheduler : schedulers.values()) {
+        for (GreedyScheduler scheduler : schedulers.values()) {
             SchedulerResult schedulerResult = scheduler.getResult();
             displayedResults.add(schedulerResult);
         }
@@ -603,10 +597,10 @@ public class Main extends Application {
         resultTableView.sort();
     }
 
-    private ArrayList<Job> uploadJobFile(Stage stage){
+    private ArrayList<Job> uploadJobFile(Stage stage) {
         fileChooser.setTitle("Vyberte súbor .csv");
         fileChooser.getExtensionFilters().clear();
-        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("CSV súbory", "*.csv"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV súbory", "*.csv"));
 
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile != null) {
@@ -619,128 +613,7 @@ public class Main extends Application {
         return new ArrayList<>();
     }
 
-    private void exportTableViewToCSV(Stage stage, TableView<?> tableView, String initialFilename){
-        if (tableView.getItems().isEmpty()){
-            Toast.show(stage, "Žiadne údaje na exportovanie!", Toast.ToastType.WARNING, 3000);
-            return;
-        }
-
-        fileChooser.setTitle("Uložte údaje do CSV");
-        fileChooser.getExtensionFilters().clear();
-        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("CSV súbory", "*.csv"));
-        fileChooser.setInitialFileName(initialFilename);
-
-        File file = fileChooser.showSaveDialog(stage);
-        if (file == null) return;
-
-        int rowCount = tableView.getItems().size();
-        int columnCount = tableView.getColumns().size();
-
-        PrintWriter writer = null;
-        try{
-            writer = new PrintWriter(file);
-
-            for (int i = 0; i < columnCount; i++) {
-                writer.print(formatCsvField(tableView.getColumns().get(i).getText()));
-                if (i < columnCount - 1) writer.print(",");
-            }
-            writer.println();
-
-            for  (int r = 0; r < rowCount; r++) {
-                for (int c = 0; c < columnCount; c++) {
-                    Object cellData = tableView.getColumns().get(c).getCellData(r);
-                    if (cellData != null) writer.print(formatCsvField(cellData.toString()));
-                    if (c < columnCount - 1) writer.print(",");
-                }
-                writer.println();
-            }
-
-            Toast.show(stage, "Súbor CSV bol úspešne exportovaný!", Toast.ToastType.SUCCESS, 2500);
-        } catch (Exception exception){
-            Toast.show(stage, "Chyba pri exportovaní CSV súboru!", Toast.ToastType.ERROR, 2500);
-            System.out.println(exception.getMessage());
-        } finally {
-            try {
-                if  (writer != null) writer.close();
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-        }
-    }
-
-    private String formatCsvField(String s){
-        if (s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
-            s = s.replace("\"", "\"\"");
-            return "\"" + s + "\"";
-        }
-        return s;
-    }
-
-    private void exportScheduleDiagramToPNG(Stage stage, ScrollPane schedule){
-        fileChooser.setTitle("Uložiť rozvrh ako PNG");
-        fileChooser.getExtensionFilters().clear();
-        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("PNG obrázky", "*.png"));
-        fileChooser.setInitialFileName("rozvrh_" + statsBox.getAlgorithmNameLabel().getText() + ".png");
-
-        File file = fileChooser.showSaveDialog(stage);
-        if (file == null) return;
-
-        try {
-            Node content = schedule.getContent();
-
-            SnapshotParameters params = new SnapshotParameters();
-            params.setTransform(Transform.scale(1, 1));
-
-            WritableImage image = new WritableImage((int) content.getBoundsInParent().getWidth(),(int) content.getBoundsInParent().getHeight());
-            content.snapshot(params, image);
-            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-
-            Toast.show(stage, "Rozvrh bol úspešne exportovaný!", Toast.ToastType.SUCCESS, 2500);
-        } catch (Exception e){
-            Toast.show(stage, "Chyba pri exportovaní rozvrhu!", Toast.ToastType.ERROR, 2500);
-            System.out.println(e.getMessage());
-        }
-    }
-
-    private void exportSingleChart(Stage stage, Chart chart, String initialFilename){
-        fileChooser.setTitle("Uložiť graf ako PNG");
-        fileChooser.getExtensionFilters().clear();
-        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("PNG obrázky", "*.png"));
-        fileChooser.setInitialFileName(initialFilename);
-
-        File file = fileChooser.showSaveDialog(stage);
-        if (file == null) return;
-
-        try{
-            WritableImage image = chart.snapshot(new SnapshotParameters(), null);
-            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-            Toast.show(stage, "Graf bol úspešne exportovaný!", Toast.ToastType.SUCCESS, 2500);
-        } catch (Exception e){
-            Toast.show(stage, "Chyba pri exportovaní grafu!", Toast.ToastType.ERROR, 2500);
-            System.out.println(e.getMessage());
-        }
-    }
-
-    private void exportAllCharts(Stage stage, ChartBox chartBox){
-        fileChooser.setTitle("Uložiť všetky grafy ako PNG");
-        fileChooser.getExtensionFilters().clear();
-        fileChooser.getExtensionFilters().add(new  FileChooser.ExtensionFilter("PNG obrázky", "*.png"));
-        fileChooser.setInitialFileName("grafy.png");
-
-        File file = fileChooser.showSaveDialog(stage);
-        if (file == null) return;
-
-        try{
-            WritableImage image = chartBox.snapshot(new SnapshotParameters(), null);
-            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-            Toast.show(stage, "Všetky grafy boli úspešne exportované!", Toast.ToastType.SUCCESS, 2500);
-        } catch (Exception e) {
-            Toast.show(stage, "Chyba pri exportovaní grafov!", Toast.ToastType.ERROR, 2500);
-            System.out.println(e.getMessage());
-        }
-    }
-
-    private HBox createStatusBar(){
+    private HBox createStatusBar() {
         statusLabel = new Label();
         statusLabel.setPadding(new Insets(5, 10, 5, 10));
 
@@ -751,10 +624,10 @@ public class Main extends Application {
         return statusBar;
     }
 
-    private void updateStatusLabel(String algorithmName, boolean runInfo){
+    private void updateStatusLabel(String algorithmName, boolean runInfo) {
         String base = "Dataset: " + loader.getFileName() + " | Počet úloh: " + jobs.size();
         if (runInfo) {
-            if (algorithmName != null){
+            if (algorithmName != null) {
                 base += " | Algoritmus: " + algorithmName;
             }
             base += " | Posledné spustenie: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yy HH:mm:ss"));
@@ -762,11 +635,11 @@ public class Main extends Application {
         statusLabel.setText(base);
     }
 
-    private void markDatasetAsModified(){
+    private void markDatasetAsModified() {
         datasetModified = true;
     }
 
-    private void notifyDatasetChanged(Stage stage){
+    private void notifyDatasetChanged(Stage stage) {
         markDatasetAsModified();
         Toast.show(stage, "Údaje datasetu boli zmenené. Spustite opäť plánovanie.", Toast.ToastType.WARNING, 3000);
         statusLabel.setText("Nastala zmena údajov v datasete. Spustite znova plánovanie. Zmena nastala " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
