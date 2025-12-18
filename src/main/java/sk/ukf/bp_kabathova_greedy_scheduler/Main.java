@@ -118,9 +118,14 @@ public class Main extends Application {
             if (!uploadedJobs.isEmpty()) {
                 jobs = uploadedJobs;
                 dataTableView.refresh();
-                initialiseSchedulers();
                 Toast.show(stage, "Úlohy boli úspešne nahrané!", Toast.ToastType.SUCCESS, 2000);
                 updateStatusLabel(null, false);
+                tabPane.getSelectionModel().select(dataTab);
+                jobsTab.setDisable(true);
+                scheduleDiagramTab.setDisable(true);
+                resultTab.setDisable(true);
+                chartsTab.setDisable(true);
+                notifyDatasetChanged(stage);
             } else {
                 Toast.show(stage, "Chyba pri nahrávaní úloh: " + loader.getErrorMessage(), Toast.ToastType.ERROR, 2000);
             }
@@ -182,6 +187,8 @@ public class Main extends Application {
             runScheduler(stage);
             tabPane.getSelectionModel().select(jobsTab);
             exportScheduleDiagramItem.setDisable(false);
+            jobsTab.setDisable(false);
+            scheduleDiagramTab.setDisable(false);
         });
 
         MenuItem runAllItem = new MenuItem("Spustiť všetky");
@@ -194,6 +201,10 @@ public class Main extends Application {
             executionTimeChartItem.setDisable(false);
             jobsChartItem.setDisable(false);
             totalTimeChartItem.setDisable(false);
+            jobsTab.setDisable(false);
+            scheduleDiagramTab.setDisable(false);
+            resultTab.setDisable(false);
+            chartsTab.setDisable(false);
         });
 
         runMenu.getItems().addAll(runItem, runAllItem);
@@ -641,8 +652,8 @@ public class Main extends Application {
 
     private void notifyDatasetChanged(Stage stage) {
         markDatasetAsModified();
-        Toast.show(stage, "Údaje datasetu boli zmenené. Spustite opäť plánovanie.", Toast.ToastType.WARNING, 3000);
-        statusLabel.setText("Nastala zmena údajov v datasete. Spustite znova plánovanie. Zmena nastala " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        Toast.show(stage, "Dataset bol zmenený. Spustite opäť plánovanie.", Toast.ToastType.WARNING, 3000);
+        statusLabel.setText("Nastala zmena údajov v datasete. Spustite opäť plánovanie. Zmena nastala " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
     }
 
     public static void main(String[] args) {
