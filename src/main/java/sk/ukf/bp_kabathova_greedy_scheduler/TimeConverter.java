@@ -7,13 +7,17 @@ import java.time.format.DateTimeFormatter;
 
 public class TimeConverter {
     public static final DateTimeFormatter FORMAT =  DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private final LocalDateTime baseTime = LocalDateTime.of(2025, 9, 1, 7,0);
+    public static LocalDateTime baseTime = LocalDateTime.of(2025, 9, 1, 7,0);
     private int workStartHour;
     private int workEndHour;
 
     TimeConverter() {
         this.workStartHour = 7;
         this.workEndHour = 22;
+    }
+
+    public static void setBaseTime(LocalDateTime baseTime) {
+        TimeConverter.baseTime = baseTime;
     }
 
     TimeConverter(int workStartHour, int workEndHour) {

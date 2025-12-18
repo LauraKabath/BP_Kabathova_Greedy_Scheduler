@@ -1,23 +1,27 @@
 package sk.ukf.bp_kabathova_greedy_scheduler;
 
 import java.io.*;
-import java.time.format.DateTimeParseException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class DataLoader {
     private ArrayList<Job> jobs;
+    private ArrayList<String> jobDates;
     private String fileName;
     private TimeConverter timeConverter;
     private String errorMessage;
 
     public DataLoader(String fileName) {
         this.fileName = fileName;
+        jobDates = new ArrayList<>();
         timeConverter = new TimeConverter();
         errorMessage = "";
     }
 
     public DataLoader() {
         jobs = new ArrayList<>();
+        jobDates = new ArrayList<>();
         timeConverter = new TimeConverter();
         errorMessage = "";
     }
@@ -32,7 +36,8 @@ public class DataLoader {
             }
             loadJobs(new InputStreamReader(inputStream));
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            errorMessage = e.getMessage();
+            clearArrayLists();
         }
         return jobs;
     }
@@ -43,13 +48,14 @@ public class DataLoader {
             fileName = file.getName();
             loadJobs(fileReader);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            errorMessage = e.getMessage();
+            clearArrayLists();
         }
         return jobs;
     }
 
-    private void loadJobs(Reader reader){
-        jobs.clear();
+    private void loadJobs(Reader reader) {
+        clearArrayLists();
         errorMessage = "";
         BufferedReader br = null;
         try {
@@ -63,28 +69,60 @@ public class DataLoader {
                 int duration = Integer.parseInt(data[1].trim());
                 if (duration <= 0)
                     throw new IllegalArgumentException("Neplatné trvanie úlohy. Trvanie musí byť kladné číslo.");
-                int deadline = timeConverter.deadlineToMinutes(data[2].trim());
-                if (deadline < 0) throw new IllegalArgumentException("Neplatný deadline úlohy.");
+                jobDates.add(data[2].trim());
                 int profit = Integer.parseInt(data[3].trim());
                 if (profit < 0)
                     throw new IllegalArgumentException("Neplatný profit úlohy. Profit musí byť kladné číslo.");
-                Job job = new Job(jobID, duration, deadline, profit);
+                Job job = new Job(jobID, duration, 0, profit);
                 jobs.add(job);
             }
-        } catch (NumberFormatException numberError){
-            jobs.clear();
+            setBaseDateTimeFromEarliest();
+            applyDeadlines();
+        } catch (NumberFormatException numberError) {
+            clearArrayLists();
             errorMessage = "Niektorá číselná hodnota nie je celé číslo. Skontrolujte trvanie a profit.";
         } catch (Exception e) {
-            jobs.clear();
+            clearArrayLists();
             errorMessage = e.getMessage();
-        } finally{
+        } finally {
             try {
                 if (br != null) br.close();
-            } catch (IOException ioException){
-                jobs.clear();
+            } catch (IOException ioException) {
+                clearArrayLists();
                 errorMessage = ioException.getMessage();
             }
         }
+    }
+
+    private void setBaseDateTimeFromEarliest() {
+        LocalDate earliestDate = null;
+        try {
+            for (String dateString : jobDates) {
+                LocalDateTime dateTime = LocalDateTime.parse(dateString, TimeConverter.FORMAT);
+                LocalDate date = dateTime.toLocalDate();
+                if (earliestDate == null || date.isBefore(earliestDate)) {
+                    earliestDate = date;
+                }
+            }
+
+            if (earliestDate != null) {
+                TimeConverter.setBaseTime(earliestDate.atTime(7, 0));
+            }
+        } catch (Exception e) {
+            errorMessage = "Deadline má neplatný formát dátumu alebo času.";
+            clearArrayLists();
+        }
+    }
+
+    private void applyDeadlines() {
+        for (int i = 0; i < jobs.size(); i++) {
+            jobs.get(i).setDeadline(timeConverter.deadlineToMinutes(jobDates.get(i)));
+        }
+    }
+
+    private void clearArrayLists() {
+        jobs.clear();
+        jobDates.clear();
     }
 
     public ArrayList<Job> getJobs() {
