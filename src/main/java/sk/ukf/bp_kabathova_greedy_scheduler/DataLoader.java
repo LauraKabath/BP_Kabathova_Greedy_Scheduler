@@ -58,29 +58,31 @@ public class DataLoader {
         clearArrayLists();
         errorMessage = "";
         BufferedReader br = null;
+        int lineNumber = 2;
         try {
             br = new BufferedReader(reader);
             String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] data = line.split("[;,]");
-                if (data.length < 4) throw new IllegalArgumentException("Nesprávny počet stĺpcov v datasete.");
+                if (data.length != 4) throw new IllegalArgumentException("Nesprávny počet stĺpcov v datasete.");
                 String jobID = data[0].trim();
-                if (jobID.isEmpty()) throw new IllegalArgumentException("ID úlohy nemôže byť prázdne.");
+                if (jobID.isEmpty()) throw new IllegalArgumentException("Prázdne ID úlohy na riadku " + lineNumber + ".");
                 int duration = Integer.parseInt(data[1].trim());
                 if (duration <= 0)
-                    throw new IllegalArgumentException("Neplatné trvanie úlohy. Trvanie musí byť kladné číslo.");
+                    throw new IllegalArgumentException("Neplatné trvanie úlohy na riadku " + lineNumber + ".\nTrvanie musí byť kladné číslo.");
                 jobDates.add(data[2].trim());
                 int profit = Integer.parseInt(data[3].trim());
                 if (profit < 0)
-                    throw new IllegalArgumentException("Neplatný profit úlohy. Profit musí byť kladné číslo.");
+                    throw new IllegalArgumentException("Neplatný profit úlohy na riadku" + lineNumber + ".\nProfit musí byť kladné číslo.");
                 Job job = new Job(jobID, duration, 0, profit);
                 jobs.add(job);
+                lineNumber++;
             }
             setBaseDateTimeFromEarliest();
             applyDeadlines();
         } catch (NumberFormatException numberError) {
             clearArrayLists();
-            errorMessage = "Niektorá číselná hodnota nie je celé číslo. Skontrolujte trvanie a profit.";
+            errorMessage = "Niektorá číselná hodnota na riadku " + lineNumber + ", nie je celé číslo.\nSkontrolujte trvanie a profit.";
         } catch (Exception e) {
             clearArrayLists();
             errorMessage = e.getMessage();
@@ -96,6 +98,7 @@ public class DataLoader {
 
     private void setBaseDateTimeFromEarliest() {
         LocalDate earliestDate = null;
+        int lineNumber = 2;
         try {
             for (String dateString : jobDates) {
                 LocalDateTime dateTime = LocalDateTime.parse(dateString, TimeConverter.FORMAT);
@@ -103,13 +106,14 @@ public class DataLoader {
                 if (earliestDate == null || date.isBefore(earliestDate)) {
                     earliestDate = date;
                 }
+                lineNumber++;
             }
 
             if (earliestDate != null) {
                 TimeConverter.setBaseTime(earliestDate.atTime(7, 0));
             }
         } catch (Exception e) {
-            errorMessage = "Deadline má neplatný formát dátumu alebo času.";
+            errorMessage = "Deadline má neplatný formát dátumu alebo času na riadku "  + lineNumber + ".";
             clearArrayLists();
         }
     }

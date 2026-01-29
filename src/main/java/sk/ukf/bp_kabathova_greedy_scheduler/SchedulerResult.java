@@ -53,7 +53,7 @@ public class SchedulerResult {
 
     public void calculateScore(double profitWeight, double timeWeight, double jobsWeight) {
         double normalizedProfit = totalProfit;
-        double normalizedTime = totalTimeUsed == 0 ? 1 : (1.0 / totalTimeUsed);
+        double normalizedTime = getExecutionTimeMillis() == 0 ? 1 : (1.0 / getExecutionTimeMillis());
         double normalizedJobsCount = scheduledJobsCount;
 
         this.score = profitWeight * normalizedProfit

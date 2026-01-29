@@ -127,7 +127,7 @@ public class Main extends Application {
                 chartsTab.setDisable(true);
                 notifyDatasetChanged(stage);
             } else {
-                Toast.show(stage, "Chyba pri nahrávaní úloh: " + loader.getErrorMessage(), Toast.ToastType.ERROR, 2000);
+                Toast.show(stage, "Chyba pri nahrávaní úloh: " + loader.getErrorMessage(), Toast.ToastType.ERROR, 2500);
             }
         });
 
