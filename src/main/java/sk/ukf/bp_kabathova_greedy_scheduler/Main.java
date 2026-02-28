@@ -27,10 +27,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 
 public class Main extends Application {
     private TableView<Job> dataTableView = new TableView<>();
@@ -546,8 +543,10 @@ public class Main extends Application {
         double timeWeight = weightsDialog.getTimeWeight();
         double jobsWeight = weightsDialog.getJobsWeight();
 
+        ArrayList<Double> values = getValuesForNormalization();
+
         for (SchedulerResult result : displayedResults) {
-            result.calculateScore(profitWeight, timeWeight, jobsWeight);
+            result.calculateScore(profitWeight, timeWeight, jobsWeight, values.get(0), values.get(1), values.get(2));
         }
         comparisonBox.update(displayedResults);
 
@@ -564,6 +563,13 @@ public class Main extends Application {
             tabPane.getTabs().add(chartsTab);
         }
         tabPane.getSelectionModel().select(resultTab);
+    }
+
+    private ArrayList<Double> getValuesForNormalization() {
+        double maxTotalProfit = Collections.max(displayedResults, Comparator.comparingInt(SchedulerResult::getTotalProfit)).getTotalProfit();
+        double maxScheduledJobsCount = Collections.max(displayedResults, Comparator.comparingInt(SchedulerResult::getScheduledJobsCount)).getScheduledJobsCount();
+        double minExecutionTimeMillis = Collections.min(displayedResults, Comparator.comparingDouble(SchedulerResult::getExecutionTimeMillis)).getExecutionTimeMillis();
+        return new ArrayList<>(Arrays.asList(maxTotalProfit, minExecutionTimeMillis, maxScheduledJobsCount));
     }
 
     private void getAlgorithmResult(GreedyScheduler greedyScheduler) {
@@ -598,8 +604,10 @@ public class Main extends Application {
     }
 
     private void applyWeightUpdate(double profitWeight, double timeWeight, double jobsWeight) {
+        ArrayList<Double> values = getValuesForNormalization();
+
         for (SchedulerResult result : displayedResults) {
-            result.calculateScore(profitWeight, timeWeight, jobsWeight);
+            result.calculateScore(profitWeight, timeWeight, jobsWeight, values.get(0), values.get(1), values.get(2));
         }
 
         resultTableView.refresh();

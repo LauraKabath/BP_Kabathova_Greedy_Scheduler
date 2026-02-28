@@ -51,10 +51,10 @@ public class SchedulerResult {
         return Math.round(score*100)/100.0;
     }
 
-    public void calculateScore(double profitWeight, double timeWeight, double jobsWeight) {
-        double normalizedProfit = totalProfit;
-        double normalizedTime = getExecutionTimeMillis() == 0 ? 1 : (1.0 / getExecutionTimeMillis());
-        double normalizedJobsCount = scheduledJobsCount;
+    public void calculateScore(double profitWeight, double timeWeight, double jobsWeight, double maxProfit, double minExecutionTime, double maxScheduledJobsCount) {
+        double normalizedProfit = maxProfit == 0 ? 0 : totalProfit / maxProfit;
+        double normalizedTime = getExecutionTimeMillis() == 0 ? 1 : minExecutionTime / getExecutionTimeMillis();
+        double normalizedJobsCount = maxScheduledJobsCount == 0 ? 0 : scheduledJobsCount / maxScheduledJobsCount;
 
         this.score = profitWeight * normalizedProfit
                 + timeWeight * normalizedTime
