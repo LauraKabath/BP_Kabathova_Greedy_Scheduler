@@ -43,7 +43,7 @@ public class WeightsDialog {
     private void initPopupStage(Consumer<double[]> onSave){
         popupStage = new Stage();
         popupStage.initModality(Modality.APPLICATION_MODAL);
-        popupStage.setTitle("Nastavenia váh");
+        popupStage.setTitle("Nastavenie váh");
 
         Label profitLabel = new Label("Váha zisku:");
         Label profitValue = createLabel(profitSlider);

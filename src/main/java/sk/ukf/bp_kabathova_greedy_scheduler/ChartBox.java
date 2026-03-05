@@ -106,9 +106,11 @@ public class ChartBox extends HBox {
         totalTimeBarChart = new BarChart<>(xAxis, yAxis);
         totalTimeBarChart.setTitle("Celkový použitý čas");
         xAxis.setLabel("Algoritmus");
-        yAxis.setLabel("Celkový čas");
+        yAxis.setLabel("Celkový čas (min)");
+
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Celkový použitý čas");
+
         for (SchedulerResult result : resultObservableList) {
             series.getData().add(new XYChart.Data<>(result.getAlgorithmName(), result.getTotalTimeUsed()));
         }

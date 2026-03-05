@@ -45,7 +45,7 @@ public class StatsBox extends VBox {
         algorithmNameLabel.setText(name);
         profitLabel.setText("Zisk: " + profit);
         executionTimeLabel.setText("Čas vykonania: " + executionTime + " ms");
-        totalTimeLabel.setText("Celkový čas: " + totalTime);
+        totalTimeLabel.setText("Celkový čas: " + totalTime + " min");
     }
 
     public void createJobsPieChart(SchedulerResult result) {

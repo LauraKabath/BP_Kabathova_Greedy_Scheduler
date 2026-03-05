@@ -46,7 +46,7 @@ public class Main extends Application {
     private ComparisonBox comparisonBox = new ComparisonBox();
     private Label statusLabel;
     private boolean datasetModified = false;
-    Tab scheduleDiagramTab = new Tab("Rozvrh");
+    private Tab scheduleDiagramTab = new Tab("Rozvrh");
 
     @Override
     public void start(Stage stage) {
@@ -79,7 +79,7 @@ public class Main extends Application {
             double profitWeight = weights[0];
             double timeWeight = weights[1];
             double jobsWeight = weights[2];
-            applyWeightUpdate(profitWeight, timeWeight, jobsWeight);
+            if (!displayedResults.isEmpty()) applyWeightUpdate(profitWeight, timeWeight, jobsWeight);
         });
 
         HBox algorithmBar = new HBox(10);
@@ -451,17 +451,17 @@ public class Main extends Application {
         TableColumn<SchedulerResult, Integer> profitCol = new TableColumn<>("Celkový zisk");
         profitCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalProfit()).asObject());
 
-        TableColumn<SchedulerResult, Integer> timeCol = new TableColumn<>("Celkový čas");
+        TableColumn<SchedulerResult, Integer> timeCol = new TableColumn<>("Celkový čas (min)");
         timeCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getTotalTimeUsed()).asObject());
 
-        TableColumn<SchedulerResult, Double> executionTimeCol = new TableColumn<>("Čas vykonania");
+        TableColumn<SchedulerResult, Double> executionTimeCol = new TableColumn<>("Čas vykonania (ms)");
         executionTimeCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getExecutionTimeMillis()).asObject());
 
         TableColumn<SchedulerResult, Double> scoreCol = new TableColumn<>("Skóre");
         scoreCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getScore()).asObject());
 
         resultTableView.getColumns().addAll(nameCol, scheduledJobsCountCol, jobsCountCol, profitCol, timeCol, executionTimeCol, scoreCol);
-        resultTableView.getColumns().forEach(col -> col.setMinWidth(105));
+        resultTableView.getColumns().forEach(col -> col.setMinWidth(117));
         nameCol.setMinWidth(160);
         jobsCountCol.setMinWidth(140);
         resultTableView.setItems(displayedResults);

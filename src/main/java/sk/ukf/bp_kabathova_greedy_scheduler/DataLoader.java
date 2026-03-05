@@ -64,7 +64,7 @@ public class DataLoader {
             String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] data = line.split("[;,]");
-                if (data.length != 4) throw new IllegalArgumentException("Nesprávny počet stĺpcov v datasete.");
+                if (data.length != 4) throw new IllegalArgumentException("Nesprávny počet stĺpcov v datasete na riadku " + lineNumber + ".");
                 String jobID = data[0].trim();
                 if (jobID.isEmpty()) throw new IllegalArgumentException("Prázdne ID úlohy na riadku " + lineNumber + ".");
                 int duration = Integer.parseInt(data[1].trim());
