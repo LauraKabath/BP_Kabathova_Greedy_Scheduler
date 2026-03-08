@@ -1,0 +1,5 @@
+Algoritmus,Plánované úlohy,Celkový počet úloh,Celkový zisk,Celkový čas (min),Čas vykonania (ms),Skóre
+ShortestJobFirstScheduler,98,100,50915,3510,0.6969,9.62
+HighestProfitScheduler,98,100,50915,3510,0.5657,10.0
+EarliestDeadlineScheduler,98,100,50915,3510,0.7285,9.55
+ProfitPerDurationScheduler,98,100,50915,3510,0.6854,9.65
