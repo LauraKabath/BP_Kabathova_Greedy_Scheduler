@@ -16,7 +16,7 @@ public class DateTimePicker extends HBox {
     private TimeConverter timeConverter;
 
     public DateTimePicker() {
-        initialise(LocalDateTime.of(2025, 9, 1, 7, 30));
+        initialise(TimeConverter.baseTime);
     }
 
     public DateTimePicker(String dateTimeString){
@@ -32,6 +32,7 @@ public class DateTimePicker extends HBox {
         timeConverter = new TimeConverter();
 
         datePicker = new DatePicker(initialDateTime.toLocalDate());
+        datePicker.setConverter(new DateStringConverter());
 
         hourSpinner = new Spinner<>(0, 23, initialDateTime.getHour());
         hourSpinner.setEditable(true);
