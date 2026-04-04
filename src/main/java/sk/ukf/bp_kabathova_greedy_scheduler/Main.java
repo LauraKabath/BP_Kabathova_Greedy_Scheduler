@@ -52,7 +52,7 @@ public class Main extends Application {
     public void start(Stage stage) {
         BorderPane root = new BorderPane();
 
-        jobs = loader.loadFromResource("/JobSampleData100.csv");
+        jobs = loader.loadFromResource("/JobSampleData150.csv");
         initialiseSchedulers();
 
         setTableView();
